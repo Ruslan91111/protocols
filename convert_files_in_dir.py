@@ -14,7 +14,7 @@ from exceptions import ScreenshotNotFoundException
 
 
 DIR_SCREENSHOTS = r'./screenshots/'
-DIR_WITH_PDF_FILES = r'C:\Users\RIMinullin\Documents\протоколы'
+DIR_WITH_PDF_FILES = r'\\dixy.local\departments-hq\Operational Support\ППК\ППК 2023\2024'
 DIR_FOR_WORD_FILES = r'C:\Users\RIMinullin\Desktop\для ворда'
 
 FINE_READER_PROCESS = 'FineReader.exe'
@@ -45,13 +45,14 @@ class FineReaderScreenshots(Enum):
     PROCESS_OF_CONVERSION: str = r'./screenshots/process_of_conversion.png'
     BUTTON_CANCEL: str = r'./screenshots/button_cancel.png'
     SAVE_BUTTON: str = r'./screenshots/save_button.png'
+    REMOVE_MARK_FROM_SAVE_PICTURES: str = r'./screenshots/save_pictures.png'
 
 
 ##################################################################################
 # Функции работы со скриншотами.
 ##################################################################################
 def wait_and_click_screenshot(screenshot_path: str,
-                              timeout: int = 5,
+                              timeout: int = 30,
                               confidence: float = 0.8) -> tuple[float] | None:
     """
     Ожидать появление скриншота в течение заданного времени.
@@ -157,6 +158,7 @@ def terminate_the_proc(process: str) -> None:
         # Если нужный процесс запущен.
         if name == process:
             proc.terminate()
+            break
 
 
 def get_path_for_existing_dir(message_for_user: str) -> str:
@@ -182,6 +184,18 @@ def get_files_required_to_convert(path_to_dir_pdf: str, path_to_dir_word: str) -
     return set_files_required_to_convert
 
 
+def input_filename(directory: str, file: str):
+    wait_and_click_screenshot(FineReaderScreenshots.INPUT_FILE_NAME.value)
+    x, y = pyautogui.position()
+    pyautogui.click(x + 80, y)
+    pyautogui.hotkey('ctrl', 'a')
+    pyautogui.press('backspace')
+    filename_pdf = '\\' + directory + '\\' + file
+    pyperclip.copy(filename_pdf.replace('\\\\', '\\'))
+    pyautogui.hotkey('ctrl', 'v')
+    pyautogui.press('enter')
+
+
 ##################################################################################
 # Главная функция модуля.
 ##################################################################################
@@ -193,8 +207,9 @@ def convert_all_pdf_in_dir_to_word() -> None:
     :return:
     """
     # Получить от пользователя пути к: 1) директория с пдф файлами и 2) word файлами
-    dir_with_pdf_files = get_path_for_existing_dir(MESSAGE_FOR_USER_GET_DIR_WITH_PDF_FILES)
-    dir_for_word_files = get_path_for_existing_dir(MESSAGE_FOR_USER_GET_DIR_WITH_WORD_FILES)
+    # dir_with_pdf_files = get_path_for_existing_dir(MESSAGE_FOR_USER_GET_DIR_WITH_PDF_FILES)
+    dir_with_pdf_files = DIR_WITH_PDF_FILES
+    dir_for_word_files = DIR_FOR_WORD_FILES
     # Перечень файлов, которые еще не конвертированы.
     files_required_to_convert = get_files_required_to_convert(dir_with_pdf_files,
                                                               dir_for_word_files)
@@ -203,47 +218,34 @@ def convert_all_pdf_in_dir_to_word() -> None:
                        FineReaderScreenshots.FINE_READER_PANEL.value,
                        FineReaderScreenshots.FINE_READER_DESKTOP.value,
                        0.8)
+
     # Дождаться полной загрузки FineReader.
     waiting_disappear_screenshot(FineReaderScreenshots.FINE_READER_LOADING.value)
 
     # Перебираем файлы в перечне файлов, нуждающихся в конвертации.
     for file in files_required_to_convert:
+
         # Главное меню, кликнуть по кнопке конвертировать.
         wait_and_click_screenshot(FineReaderScreenshots.BUTTON_CONVERT_TO_WORD_MAIN_MENU.value)
+
         # Ввести путь и наименование файла PDF, который нужно конвертировать.
-        wait_and_click_screenshot(FineReaderScreenshots.INPUT_FILE_NAME.value)
-        x, y = pyautogui.position()
-        pyautogui.click(x + 80, y)
-        pyautogui.hotkey('ctrl', 'a')
-        pyautogui.press('backspace')
-        filename_pdf = dir_with_pdf_files + '\\' + file
-        pyperclip.copy(filename_pdf.replace('\\\\', '\\'))
-        pyautogui.hotkey('ctrl', 'v')
-        pyautogui.press('enter')
+        input_filename(dir_with_pdf_files, file)
 
         # Нажать синюю кнопку конвертировать в Word.
         wait_and_click_screenshot(FineReaderScreenshots.BLUE_BUTTON_CONVERT_TO_WORD.value)
 
         # Ввести путь и наименование word файла, в котором будет сохранен результат конвертации.
-        wait_and_click_screenshot(FineReaderScreenshots.INPUT_FILE_NAME.value)
-        x, y = pyautogui.position()
-        pyautogui.click(x + 80, y)
-        pyautogui.hotkey('ctrl', 'a')
-        pyautogui.press('backspace')
-        filename_pdf = dir_for_word_files + '\\' + file
-        pyperclip.copy(filename_pdf.replace('\\\\', '\\'))
-        pyautogui.hotkey('ctrl', 'v')
-        pyautogui.press('enter')
+        input_filename(dir_for_word_files, file)
 
         # Нажать кнопку сохранить.
         wait_and_click_screenshot(FineReaderScreenshots.SAVE_BUTTON.value)
-
-        # Дождаться окончания конвертации.
-        waiting_disappear_screenshot(FineReaderScreenshots.PROCESS_OF_CONVERSION.value, timeout=40)
+        time.sleep(30)
 
         # Закрыть word файл, который открывается автоматически после конвертации.
         terminate_the_proc(WORD_PROCESS)
+        # Нажать кнопку отмены в меню.
         wait_and_click_screenshot(FineReaderScreenshots.BUTTON_CANCEL.value)
+        time.sleep(1)
 
 
 if __name__ == '__main__':
