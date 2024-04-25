@@ -1,7 +1,5 @@
-# Импорт необходимых модулей
 from sqlalchemy import create_engine, Column, Integer, String, JSON, ForeignKey, MetaData, Table
-from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy.orm import sessionmaker, relationship
+from sqlalchemy.orm import sessionmaker, relationship, DeclarativeBase
 import pandas as pd
 
 from get_data_from_word_file import get_data_from_word_file
@@ -9,8 +7,12 @@ from get_data_from_word_file import get_data_from_word_file
 
 PATH_XLSX_STORES = r'C:\Users\RIMinullin\PycharmProjects\protocols\info6.xlsx'
 DOC = 'C:\\Users\\RIMinullin\\Desktop\\для ворда\\большие\\32002 19.09.2023.docx'
+# Base.metadata.create_all(engine)
+DATABASE_URL = 'sqlite:///store.db'
 
 
+# Словарь для сопоставления ключей из данных, собранных в word документе
+# и наименований полей в модели Protocol
 KEYS_FOR_MAPPING_MODEL_PROTOCOL = {
     'Номер протокола': 'number',
     'Дата протокола': 'date',
@@ -25,11 +27,20 @@ KEYS_FOR_MAPPING_MODEL_PROTOCOL = {
     'Показатели': 'indicators'
 }
 
-# Создание базы данных SQLite и настройка сессии
+
+# Создание базы данных SQLite и настройка сессии.
+# echo - параметр для вывода операций с БД в консоль.
 engine = create_engine('sqlite:///store.db', echo=True)
-Base = declarative_base()
 Session = sessionmaker(bind=engine)
 session = Session()
+
+
+#############################################################################
+# МОДЕЛИ - ДАННЫХ
+#############################################################################
+class Base(DeclarativeBase):
+    """ Базовый класс для создания и наследования нашими моделями """
+    pass
 
 
 class Store(Base):
@@ -38,18 +49,24 @@ class Store(Base):
 
     id = Column(Integer, primary_key=True, nullable=False)  # Уникальный номер магазина
     address = Column(String, nullable=False)  # Адрес магазина
+    # Связь с таблицей протоколы
+    protocols = relationship("Protocol", back_populates="store")
 
     def __repr__(self):
+        """Представление экземпляров класса"""
         return f"<Магазин(номер={self.id}, адрес='{self.address}')>"
 
 
 class Protocol(Base):
     """Модель - протоколы"""
     __tablename__ = 'protocols'
-
+    # Primary key
     number = Column(String, primary_key=True, nullable=False)
     date = Column(String, primary_key=True, nullable=False)
+    # Foreign Key - store - связь с таблицей магазины
     store_id = Column(Integer, ForeignKey('stores.id'))
+    store = relationship("Store", back_populates="protocols")
+
     sampling_datetime = Column(String, nullable=True)
     accompanying_documents = Column(String, nullable=True)
     product_type = Column(String, nullable=True)
@@ -60,10 +77,11 @@ class Protocol(Base):
     indicators = Column(JSON)
 
     def __repr__(self):
+        """Представление экземпляров класса"""
         return (
             f"<Номер протокола={self.number}, "
             f"Дата протокола='{self.date}, "
-            f"Место отбора проб={self.sampling_site}, "
+            f"Место отбора проб={self.store_id}, "
             f"Сопроводительные документы='{self.accompanying_documents}, "
             f"Группа продукции='{self.product_type}, "
             f"Наименование продукции='{self.name_of_product}, "
@@ -75,80 +93,86 @@ class Protocol(Base):
         )
 
 
-# Функция для создания таблицы в базе данных
+#############################################################################
+# КЛАССЫ - ДЛЯ ВЗАИМОДЕЙСТВИЯ С МОДЕЛЯМИ.
+#############################################################################
+class StoreManager:
+    """ Класс для взаимодействия с моделью Store."""
+    def add_store_to_db(self, id, address):
+        """ Добавить в таблицу экземпляр магазина. """
+        new_store = Store(id=id, address=address)
+        session.add(new_store)
+        # Подтверждение изменений
+        session.commit()
+
+    def fill_the_stores_from_file(self, path_excel: str):
+        """ Заполнить таблицу данными из xlsx файла,
+        содержащего коды и адреса магазинов. """
+        df = pd.read_excel(path_excel)
+        for _, row in df.iterrows():
+            self.add_store_to_db(row['№ Магазина'], row['Адрес'])
+
+    def get_all_stores(self) -> list:
+        """ Забрать все магазины из БД. """
+        stores = session.query(Store).all()
+        return stores
+
+    def delete_all_stores_from_table(self):
+        """Функция для удаления всех записей из таблицы магазинов"""
+        session.query(Store).delete()
+        session.commit()
+
+
+class ProtocolManager:
+    """ Класс для взаимодействия с моделью Protocol."""
+    def add_protocol_to_db(self, word_file: str) -> None:
+        """ Добавить экземпляр протокола в таблицу БД. """
+
+        def _prepare_data_for_add_protocol(data: dict, dict_of_mapping: dict) -> dict:
+            """Внутренняя функция - заменить ключи в данных, подготовленных для
+            записи в БД на наименования полей модели."""
+            new_data = {}
+            for i in data:
+                new_data[dict_of_mapping[i]] = data[i]
+            return new_data
+
+        # Получить данные для добавления в таблицу из word файла.
+        word_data = get_data_from_word_file(word_file)
+        # Подготовить данные для добавления
+        data_for_db = _prepare_data_for_add_protocol(word_data, KEYS_FOR_MAPPING_MODEL_PROTOCOL)
+        # Записываем экземпляр в таблицу.
+        new_protocol = Protocol(**data_for_db)
+        session.add(new_protocol)
+        session.commit()
+
+    def get_all_protocols(self) -> list:
+        """ Забрать все протоколы из БД. """
+        protocols = session.query(Protocol).all()
+        return protocols
+
+    def delete_all_protocols_from_table(self):
+        """Функция для удаления всех записей из таблицы протоколов."""
+        session.query(Protocol).delete()
+        session.commit()
+
+
+#############################################################################
+# Функции
+#############################################################################
 def create_table():
+    """ Создать в БД все таблицы, описанные в модуле. """
     Base.metadata.create_all(engine)
 
 
-# Функция для добавления магазина
-def add_store(id, address):
-    new_store = Store(id=id, address=address)
-    session.add(new_store)
-    session.commit()
-
-
-# Забрать все магазины из БД
-def list_stores():
-    stores = session.query(Store).all()
-    return stores
-
-
-# Забрать все магазины из БД
-def list_protocols():
-    protocols = session.query(Protocol).all()
-    return protocols
-
-
-# Функция для удаления всех записей из таблицы магазинов
-def clear_stores_table():
-    # Очистка таблицы 'stores' от всех записей
-    session.query(Store).delete()
-    # Подтверждение изменений
-    session.commit()
-
-
-# Функция для удаления всех записей из таблицы магазинов
-def clear_protocols_table():
-    # Очистка таблицы 'stores' от всех записей
-    session.query(Protocol).delete()
-    # Подтверждение изменений
-    session.commit()
-
-
-def fill_the_stores(path_excel: str):
-    df = pd.read_excel(path_excel)
-    for _, row in df.iterrows():
-        add_store(row['№ Магазина'], row['Адрес'])
-
-
-def prepare_data_for_add_protocol(data: dict, dict_of_mapping: dict) -> dict:
-    new_data = {}
-    for i in data:
-        new_data[dict_of_mapping[i]] = data[i]
-    return new_data
-
-
-# Функция для добавления протокола в БД.
-def add_protocol(**kwargs):
-    new_protocol = Protocol(**kwargs)
-    session.add(new_protocol)
-    session.commit()
-
-
-def add_protocol_to_db(word_file: str) -> None:
-    word_data = get_data_from_word_file(word_file)
-    data_for_db = prepare_data_for_add_protocol(word_data, KEYS_FOR_MAPPING_MODEL_PROTOCOL)
-    add_protocol(**data_for_db)
-
-
-def view_all_tables_in_db():
-    """Отобразить все таблицы и поля, находящиеся в БД."""
+def get_all_tables_in_db():
+    """Вернуть все таблицы и поля, находящиеся в БД."""
     metadata = MetaData()
     metadata.reflect(bind=engine)
-    print(metadata.tables)
+    return metadata.tables
 
 
-def drop_table(table_name, database_url):
+def drop_the_table_in_db(table_name, database_url):
+    """Удалить таблицу из БД."""
     engine = create_engine(database_url)
     metadata = MetaData()
     metadata.reflect(bind=engine)
@@ -162,25 +186,22 @@ def drop_table(table_name, database_url):
         print(f"Таблица '{table_name}' не найдена в базе данных.")
 
 
-
-# Base.metadata.create_all(engine)
-database_url = 'sqlite:///store.db'
-
-
 if __name__ == "__main__":
 
-    # drop_table('protocols', database_url)
-    # Создание таблицы
-    # clear_protocols_table()
-    # view_all_tables_in_db()
-    # create_table()
-    # add_protocol_to_db(DOC)
-    print('list', list_protocols())
-    # clear_stores_table()
-    # Добавление примеров магазинов (закомментировано, чтобы не добавлять каждый раз при запуске)
-    # add_store(32002, 'Брянская область, г. Клинцы, проспект Ленина, д.34')
-    # add_store(2, 'Улица Советская, д. 25')
-    # fill_the_stores(PATH_INFO6)
-    # # Вывод всех магазинов
-    # print(list_stores())
+    # Удалить полностью таблицу из БД
+    # drop_the_table_in_db('protocols', DATABASE_URL)
 
+    # Просмотреть все таблицы в БД
+    print(get_all_tables_in_db())
+
+    # Создать все таблицы, описанные в модуле
+    # create_table()
+
+    # Добавить конкретный протокол в таблицу
+    # ProtocolManager().add_protocol_to_db(DOC)
+
+    # Добавление конкретного магазина
+    # StoreManager().add_store_to_db(32002, 'Брянская область, г. Клинцы, проспект Ленина, д.34')
+
+    # Заполнить таблицу всеми магазинами в файле.
+    # StoreManager.fill_the_stores_from_file(PATH_XLSX_STORES)
