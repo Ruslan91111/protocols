@@ -1,15 +1,19 @@
+import json
+import os
+
+import pandas as pd
 from sqlalchemy import create_engine, Column, Integer, String, JSON, ForeignKey, MetaData, Table
 from sqlalchemy.orm import sessionmaker, relationship, DeclarativeBase
-import pandas as pd
+from sqlalchemy.exc import IntegrityError
 
-from get_data_from_word_file import get_data_from_word_file
+from get_data_from_word_file import get_all_data_from_word_file
 
 
 PATH_XLSX_STORES = r'C:\Users\RIMinullin\PycharmProjects\protocols\info6.xlsx'
 DOC = 'C:\\Users\\RIMinullin\\Desktop\\для ворда\\большие\\32002 19.09.2023.docx'
 # Base.metadata.create_all(engine)
 DATABASE_URL = 'sqlite:///store.db'
-
+DIR_WITH_WORD = r'C:\\Users\\RIMinullin\\Desktop\\для ворда\\большие\\'
 
 # Словарь для сопоставления ключей из данных, собранных в word документе
 # и наименований полей в модели Protocol
@@ -17,6 +21,7 @@ KEYS_FOR_MAPPING_MODEL_PROTOCOL = {
     'Номер протокола': 'number',
     'Дата протокола': 'date',
     'Место отбора проб': 'store_id',
+    'Адрес магазина': 'address',
     'Дата и время отбора проб': 'sampling_datetime',
     'Сопроводительные документы': 'accompanying_documents',
     'Группа продукции': 'product_type',
@@ -26,7 +31,6 @@ KEYS_FOR_MAPPING_MODEL_PROTOCOL = {
     'Дата проведения исследований': 'date_of_test',
     'Показатели': 'indicators'
 }
-
 
 # Создание базы данных SQLite и настройка сессии.
 # echo - параметр для вывода операций с БД в консоль.
@@ -60,7 +64,7 @@ class Store(Base):
 class Protocol(Base):
     """Модель - протоколы"""
     __tablename__ = 'protocols'
-    # Primary key
+    # Primary key - составной на два поля.
     number = Column(String, primary_key=True, nullable=False)
     date = Column(String, primary_key=True, nullable=False)
     # Foreign Key - store - связь с таблицей магазины
@@ -98,6 +102,7 @@ class Protocol(Base):
 #############################################################################
 class StoreManager:
     """ Класс для взаимодействия с моделью Store."""
+
     def add_store_to_db(self, id, address):
         """ Добавить в таблицу экземпляр магазина. """
         new_store = Store(id=id, address=address)
@@ -125,6 +130,7 @@ class StoreManager:
 
 class ProtocolManager:
     """ Класс для взаимодействия с моделью Protocol."""
+
     def add_protocol_to_db(self, word_file: str) -> None:
         """ Добавить экземпляр протокола в таблицу БД. """
 
@@ -136,8 +142,10 @@ class ProtocolManager:
                 new_data[dict_of_mapping[i]] = data[i]
             return new_data
 
+        Session = sessionmaker(bind=engine)
+        session = Session()
         # Получить данные для добавления в таблицу из word файла.
-        word_data = get_data_from_word_file(word_file)
+        word_data = get_all_data_from_word_file(word_file)
         # Подготовить данные для добавления
         data_for_db = _prepare_data_for_add_protocol(word_data, KEYS_FOR_MAPPING_MODEL_PROTOCOL)
         # Записываем экземпляр в таблицу.
@@ -186,16 +194,60 @@ def drop_the_table_in_db(table_name, database_url):
         print(f"Таблица '{table_name}' не найдена в базе данных.")
 
 
+def apply_func_through_for(path_to_dir: str, func):
+    """ Применить одну из функций модуля через цикл ко всем документам в директории. """
+    # Множество из имен word файлов в папке.
+    word_files = {i for i in os.listdir(path_to_dir) if i[0] != '~' and i[-5:] == '.docx'}
+    for file in word_files:
+        filename = path_to_dir + file
+
+        print('Название файла: ', file)
+        try:
+            func(filename)
+        except IntegrityError:
+            print(f'File {file}, не записан в БД, объект уже существует в таблице.')
+
+
+def launch_write_protocols_to_db():
+    apply_func_through_for(DIR_WITH_WORD, ProtocolManager().add_protocol_to_db)
+
+
+def protocols_from_db_to_excel():
+    all_protocols = ProtocolManager().get_all_protocols()
+
+    # Загружаем данные из таблицы в DataFrame
+    df = pd.read_sql_table('protocols', engine)
+
+    # Преобразуем столбец indicators с JSON данными в отдельные столбцы
+    df['indicators'] = df['indicators'].apply(lambda x: json.loads(x))
+
+    # Загружаем данные из таблицы stores для получения названия магазина
+    df_stores = pd.read_sql_table('stores', engine)
+
+    # Объединяем данные из двух таблиц по столбцу store_id
+    df = pd.merge(df, df_stores[['id', 'address']], left_on='store_id', right_on='id', how='left')
+    df = df.drop('id', axis=1)  # Удаляем лишний столбец с id
+
+    df = df[[col for col in KEYS_FOR_MAPPING_MODEL_PROTOCOL.values()]]
+
+    df.columns = list(KEYS_FOR_MAPPING_MODEL_PROTOCOL.keys())
+    # Сохраняем данные в Excel файл
+    df.to_excel('название_файла.xlsx', index=False)
+
+
 if __name__ == "__main__":
+    # launch_write_protocols_to_db()
+    protocols_from_db_to_excel()
 
     # Удалить полностью таблицу из БД
     # drop_the_table_in_db('protocols', DATABASE_URL)
-
-    # Просмотреть все таблицы в БД
-    print(get_all_tables_in_db())
+    # drop_the_table_in_db('stores', DATABASE_URL)
 
     # Создать все таблицы, описанные в модуле
     # create_table()
+
+    # Просмотреть все таблицы в БД
+    # print(get_all_tables_in_db())
 
     # Добавить конкретный протокол в таблицу
     # ProtocolManager().add_protocol_to_db(DOC)
@@ -204,4 +256,8 @@ if __name__ == "__main__":
     # StoreManager().add_store_to_db(32002, 'Брянская область, г. Клинцы, проспект Ленина, д.34')
 
     # Заполнить таблицу всеми магазинами в файле.
-    # StoreManager.fill_the_stores_from_file(PATH_XLSX_STORES)
+    # StoreManager().fill_the_stores_from_file(PATH_XLSX_STORES)
+
+    # all_protocols = ProtocolManager().get_all_protocols()
+    # all_stores = StoreManager().get_all_stores()
+    # print(all_stores)
