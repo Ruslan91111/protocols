@@ -2,7 +2,6 @@
 Класс WordFileParser, при создании объекта принимает путь к Word файлу,
 Содержит методы изъятия нужных данных из Word файла.
 """
-
 import json
 import re
 
@@ -10,6 +9,7 @@ from docx import Document
 import docx2txt
 
 from constants import REQUIRED_KEYS_FOR_PARSING_FIRST_PAGE
+
 
 FILE_1 = r'C:\Users\RIMinullin\Desktop\для ворда\в высоком качестве\word_files\\1.docx'
 FILE_2 = r'C:\Users\RIMinullin\Desktop\для ворда\в высоком качестве\word_files\\14.docx'
@@ -134,7 +134,8 @@ class WordFileParser:
                 # Проверка, что таблица, относится к показателям.
                 if (len(first_row_cells) > 1 and
                         first_row_cells[0].text == "Наименование показателя" and
-                        first_row_cells[1].text == "Результат"):
+                        first_row_cells[1].text == "Результат" and
+                        "Требования НД" in first_row_cells[2].text):
                     indicators = {}
 
                     # Цикл по строкам, начиная со второй.
