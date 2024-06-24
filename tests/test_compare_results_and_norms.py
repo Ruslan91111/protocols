@@ -1,6 +1,6 @@
 import pytest
 
-from compare_results_and_norms import compare_result_and_norms
+from comparison_results_and_norms import compare_result_and_norms
 
 
 def test_find_violations_of_value():

@@ -1,20 +1,36 @@
 """
-Класс WordFileParser, при создании объекта принимает путь к Word файлу,
-Содержит методы изъятия нужных данных из Word файла.
+Модуль для изъятия необходимых данных их word файла.
+
+    class WordFileParser - содержит методы изъятия нужных данных из Word файла.
+      Для получения необходимых данных при инициализации класса передать путь к word файлу.
+      Для получения и возвращения словаря с необходимыми данными у экземпляра класса
+      вызвать метод get_all_required_data_from_word_file без передачи аргументов.
+
+      def get_all_required_data_from_word_file() - возвращает словарь, ключи необходимые для
+        сбора поля, значения - сами данные из файла. Значения в словаре в виде строк.
+
+      пример использования:
+        word_parser = WordFileParser(path_to_word_file)
+        required_data = word_parser.get_all_required_data_from_word_file()
+
 """
-import json
 import re
 
 from docx import Document
 import docx2txt
 
 from constants import REQUIRED_KEYS_FOR_PARSING_FIRST_PAGE
+from comparison_results_and_norms import compare_result_and_norms
 
 
 FILE_1 = r'C:\Users\RIMinullin\Desktop\для ворда\в высоком качестве\word_files\\1.docx'
 FILE_2 = r'C:\Users\RIMinullin\Desktop\для ворда\в высоком качестве\word_files\\14.docx'
 FILE_3 = r'C:\Users\RIMinullin\Desktop\для ворда\в высоком качестве\word_files\\6.docx'
 DIR_WITH_WORD = r'C:\\Users\\RIMinullin\\Desktop\\для ворда\\большие\\'
+
+# Множество для хранения заголовков таблицы, для пропуска при высчитывании соответствия нормам.
+KEYS_IN_INDICATORS_FOR_PASS = {'Токсичные элементы, мг/кг:',
+            'Пестициды, мг/кг:', }
 
 
 class WordFileParser:
@@ -71,7 +87,6 @@ class WordFileParser:
 
     def get_all_items_from_tables(self) -> dict:
         """ Собрать в словарь, все данные из таблиц word файла. """
-
         all_tables_in_file: list = self.document_with_tables.tables
         # Пустой словарь под данные из таблиц, количество ключей равно количеству таблиц в файле.
         data_by_tables: dict = {table: None for table in range(len(all_tables_in_file))}
@@ -115,7 +130,7 @@ class WordFileParser:
         required_data_from_tables = _find_code_of_store(required_data_from_tables)
         return required_data_from_tables
 
-    def get_indicators_from_word_file(self) -> list[dict[str: list]]:
+    def get_indicators_from_word_file(self) -> list:
         """ Получить показатели из протокола.
 
         Берет таблицы из документа, ищет в которых первые
@@ -148,19 +163,46 @@ class WordFileParser:
                         indicators[indicator_name] = (results, requirements)
 
                     result_list.append(indicators)
-
         return result_list
+
+    def add_a_conclusion_about_compliance_of_norms(self, data_from_protocol: dict):
+        """ Добавить в словарь вывод о соответствие результатов исследований нормам."""
+        # Переменная есть ли нарушения в показателях.
+        violations = False
+        # Перебираем словари в 'показателях'.
+        for number, indicator_dict in enumerate(data_from_protocol['Показатели']):
+            # key - наименование показателя, value - tuple, где value[0] - результат,
+            # value[1] - норма для показателя
+            for key, value in indicator_dict.items():
+                if key in KEYS_IN_INDICATORS_FOR_PASS:
+                    new_value = value + ('-',)
+                else:
+                    # Получаем bool соответствует ли результат норме.
+                    complies_with_standards = compare_result_and_norms(value[0], value[1])
+                    if not complies_with_standards:
+                        violations = True
+                    new_value = value + (complies_with_standards,)
+
+                # Добавляем в словарь в value bool как вывод о соответствии норм.
+                data_from_protocol['Показатели'][number][key] = new_value
+
+        # Добавляем в словарь новый ключ с bool есть ли в протоколе нарушение норм.
+        data_from_protocol['Нарушения норм'] = 'Не соответствуют' if violations else 'Соответствуют'
+        return data_from_protocol
 
     def get_all_required_data_from_word_file(self) -> dict:
         """ Основной метод - направленный на изъятие данных из Word файла."""
         data_from_protocol = {}
         (data_from_protocol['Номер протокола'],
          data_from_protocol['Дата протокола']) = self.extract_number_and_date_protocol()
+
         # Добавить в словарь все пары с первой таблицы.
         data_from_protocol.update(self.leave_required_items_from_tables())
+
         # Добавить в словарь показатели.
         data_from_protocol['Показатели'] = self.get_indicators_from_word_file()
-        # data_from_protocol['Показатели'] = json.dumps(self.get_indicators_from_word_file())
+        data_from_protocol = self.add_a_conclusion_about_compliance_of_norms(data_from_protocol)
+        # data_from_protocol['Показатели'] = json.dumps(data_from_protocol['Показатели'])
         return data_from_protocol
 
 
@@ -177,13 +219,3 @@ def add_spaces_between_digits_and_letters(text: str) -> str:
     result += text[-1]
     return result
 
-
-if __name__ == "__main__":
-    word_parser = WordFileParser(FILE_1)
-    print(word_parser.get_all_required_data_from_word_file())
-
-    word_parser = WordFileParser(FILE_2)
-    print(word_parser.get_all_required_data_from_word_file())
-
-    word_parser = WordFileParser(FILE_3)
-    print(word_parser.get_all_required_data_from_word_file())

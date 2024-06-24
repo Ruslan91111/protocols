@@ -2,14 +2,13 @@ import json
 import os
 
 import pandas as pd
-from sqlalchemy import create_engine, Column, Integer, String, JSON, ForeignKey, MetaData, Table
+from sqlalchemy import create_engine, Column, Integer, String, JSON, ForeignKey, MetaData, Table, Boolean
 from sqlalchemy.orm import sessionmaker, relationship, DeclarativeBase
 from sqlalchemy.exc import IntegrityError
 
-from get_data_from_word_file import get_all_data_from_word_file
+from get_data_from_word_file import WordFileParser
 
-
-PATH_XLSX_STORES = r'C:\Users\RIMinullin\PycharmProjects\protocols\info6.xlsx'
+PATH_XLSX_STORES = r'C:\Users\RIMinullin\PycharmProjects\protocols\get_magazines.xlsx'
 DOC = 'C:\\Users\\RIMinullin\\Desktop\\для ворда\\большие\\32002 19.09.2023.docx'
 # Base.metadata.create_all(engine)
 DATABASE_URL = 'sqlite:///store.db'
@@ -79,21 +78,22 @@ class Protocol(Base):
     manufacturer = Column(String, nullable=True)
     date_of_test = Column(String, nullable=True)
     indicators = Column(JSON)
+    compliance_with_standards = Column(Boolean)
 
     def __repr__(self):
         """Представление экземпляров класса"""
         return (
             f"<Номер протокола={self.number}, "
-            f"Дата протокола='{self.date}, "
+            f"Дата протокола={self.date}, "
             f"Место отбора проб={self.store_id}, "
-            f"Сопроводительные документы='{self.accompanying_documents}, "
-            f"Группа продукции='{self.product_type}, "
-            f"Наименование продукции='{self.name_of_product}, "
-            f"Дата производства продукции='{self.production_date}, "
-            f"Производитель (фирма, предприятие, организация)='{self.manufacturer}, "
-            f"Дата проведения исследований='{self.date_of_test}, "
-            f"Показатели='{self.indicators}, "
-            f"')>"
+            f"Сопроводительные документы={self.accompanying_documents}, "
+            f"Группа продукции={self.product_type}, "
+            f"Наименование продукции={self.name_of_product}, "
+            f"Дата производства продукции={self.production_date}, "
+            f"Производитель (фирма, предприятие, организация)={self.manufacturer}, "
+            f"Дата проведения исследований={self.date_of_test}, "
+            f"Показатели={json.loads(self.indicators)}, "
+            f"Соответствие нормам={self.compliance_with_standards}>"
         )
 
 
@@ -145,7 +145,7 @@ class ProtocolManager:
         Session = sessionmaker(bind=engine)
         session = Session()
         # Получить данные для добавления в таблицу из word файла.
-        word_data = get_all_data_from_word_file(word_file)
+        word_data = WordFileParser(word_file).get_all_required_data_from_word_file
         # Подготовить данные для добавления
         data_for_db = _prepare_data_for_add_protocol(word_data, KEYS_FOR_MAPPING_MODEL_PROTOCOL)
         # Записываем экземпляр в таблицу.
@@ -230,7 +230,7 @@ def protocols_from_db_to_excel():
 
     df = df[[col for col in KEYS_FOR_MAPPING_MODEL_PROTOCOL.values()]]
 
-    df.columns = list(KEYS_FOR_MAPPING_MODEL_PROTOCOL.keys())
+    df.COLUMNS_FOR_SAVE_TO_EXCEL = list(KEYS_FOR_MAPPING_MODEL_PROTOCOL.keys())
     # Сохраняем данные в Excel файл
     df.to_excel('название_файла.xlsx', index=False)
 
