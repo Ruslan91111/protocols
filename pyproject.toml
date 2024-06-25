@@ -25,7 +25,7 @@ docx2txt = "^0.8"
 sqlalchemy = "^2.0.29"
 openpyxl = "^3.1.2"
 pynput = "^1.7.6"
-pytest = "^8.2.0"
+pytest = "^8.2.2"
 
 
 [build-system]

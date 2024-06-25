@@ -23,11 +23,14 @@ class FineReaderScreenshots(Enum):
 
 
 FINE_READER_PROCESS = 'FineReader.exe'
+
 WORD_PROCESS = 'WINWORD.EXE'
+
 MESSAGE_FOR_USER_GET_DIR_WITH_PDF_FILES = (
     'Введите полный путь (включая сетевой диск) до директории, '
     'в которой находятся файлы формата PDF, нуждающиеся в конвертации в формат Word:'
     '\n>>>')
+
 MESSAGE_FOR_USER_GET_DIR_WITH_WORD_FILES = (
     'Введите полный путь (включая сетевой диск) до директории, '
     'в которой будут находиться файлы Word после конвертации:'
@@ -44,3 +47,24 @@ REQUIRED_KEYS_FOR_PARSING_FIRST_PAGE = (
     'Производитель (фирма, предприятие, организация)',
     'Дата проведения исследований'
 )
+PATH_XLSX_STORES = r'C:\Users\RIMinullin\PycharmProjects\protocols\get_magazines.xlsx'
+DATABASE_URL = 'sqlite:///store.db'
+DIR_WITH_WORD = r'C:\\Users\\RIMinullin\\Desktop\\для ворда\\большие\\'
+
+# Словарь для сопоставления ключей из данных, собранных в word документе
+# и наименований полей в модели Protocol
+KEYS_FOR_MAPPING_MODEL_PROTOCOL = {
+    'Номер протокола': 'number',
+    'Дата протокола': 'date',
+    'Место отбора проб': 'store_id',
+    'Адрес магазина': 'address',
+    'Дата и время отбора проб': 'sampling_datetime',
+    'Сопроводительные документы': 'accompanying_documents',
+    'Группа продукции': 'product_type',
+    'Наименование продукции': 'name_of_product',
+    'Дата производства продукции': 'production_date',
+    'Производитель (фирма, предприятие, организация)': 'manufacturer',
+    'Дата проведения исследований': 'date_of_test',
+    'Показатели': 'indicators',
+    'Нарушения норм': 'compliance_with_standards'
+}

@@ -23,9 +23,9 @@ from constants import REQUIRED_KEYS_FOR_PARSING_FIRST_PAGE
 from comparison_results_and_norms import compare_result_and_norms
 
 
-FILE_1 = r'C:\Users\RIMinullin\Desktop\для ворда\в высоком качестве\word_files\\1.docx'
-FILE_2 = r'C:\Users\RIMinullin\Desktop\для ворда\в высоком качестве\word_files\\14.docx'
-FILE_3 = r'C:\Users\RIMinullin\Desktop\для ворда\в высоком качестве\word_files\\6.docx'
+FILE_1 = r'C:\Users\RIMinullin\PycharmProjects\protocols\tests\word_files\file_1.docx'
+FILE_2 = r'C:\Users\RIMinullin\PycharmProjects\protocols\tests\word_files\file_2.docx'
+FILE_3 = r'C:\Users\RIMinullin\PycharmProjects\protocols\tests\word_files\file_3.docx'
 DIR_WITH_WORD = r'C:\\Users\\RIMinullin\\Desktop\\для ворда\\большие\\'
 
 # Множество для хранения заголовков таблицы, для пропуска при высчитывании соответствия нормам.
@@ -219,3 +219,7 @@ def add_spaces_between_digits_and_letters(text: str) -> str:
     result += text[-1]
     return result
 
+
+print(WordFileParser(FILE_1).get_all_required_data_from_word_file())
+print(WordFileParser(FILE_2).get_all_required_data_from_word_file())
+print(WordFileParser(FILE_3).get_all_required_data_from_word_file())
