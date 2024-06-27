@@ -49,6 +49,8 @@ REQUIRED_KEYS_FOR_PARSING_FIRST_PAGE = (
 )
 PATH_XLSX_STORES = r'C:\Users\RIMinullin\PycharmProjects\protocols\get_magazines.xlsx'
 DATABASE_URL = 'sqlite:///store.db'
+TEST_DATABASE_URL = 'sqlite:///:memory:'
+
 DIR_WITH_WORD = r'C:\\Users\\RIMinullin\\Desktop\\для ворда\\большие\\'
 
 # Словарь для сопоставления ключей из данных, собранных в word документе

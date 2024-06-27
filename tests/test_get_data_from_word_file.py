@@ -16,4 +16,5 @@ def test_received_data_from_word_file(request, file, expected_data):
     expected_data_from_word_file = request.getfixturevalue(expected_data)  # Ожидаемые данные из БД
     word_parser = WordFileParser(file)
     received_data = word_parser.get_all_required_data_from_word_file()
+
     assert received_data == expected_data_from_word_file

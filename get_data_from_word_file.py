@@ -22,12 +22,6 @@ import docx2txt
 from constants import REQUIRED_KEYS_FOR_PARSING_FIRST_PAGE
 from comparison_results_and_norms import compare_result_and_norms
 
-
-FILE_1 = r'C:\Users\RIMinullin\PycharmProjects\protocols\tests\word_files\file_1.docx'
-FILE_2 = r'C:\Users\RIMinullin\PycharmProjects\protocols\tests\word_files\file_2.docx'
-FILE_3 = r'C:\Users\RIMinullin\PycharmProjects\protocols\tests\word_files\file_3.docx'
-DIR_WITH_WORD = r'C:\\Users\\RIMinullin\\Desktop\\для ворда\\большие\\'
-
 # Множество для хранения заголовков таблицы, для пропуска при высчитывании соответствия нормам.
 KEYS_IN_INDICATORS_FOR_PASS = {'Токсичные элементы, мг/кг:',
             'Пестициды, мг/кг:', }
@@ -130,6 +124,13 @@ class WordFileParser:
         required_data_from_tables = _find_code_of_store(required_data_from_tables)
         return required_data_from_tables
 
+    def check_that_table_consist_indicators(self, first_row_cells):
+        if (len(first_row_cells) > 1 and
+                (re.search(r"Наименование", first_row_cells[0].text)) and
+                (re.search(r"Результат", first_row_cells[1].text)) and
+                (re.search(r"Требования", first_row_cells[2].text))):
+            return True
+
     def get_indicators_from_word_file(self) -> list:
         """ Получить показатели из протокола.
 
@@ -147,12 +148,8 @@ class WordFileParser:
                 first_row_cells = table.row_cells(0)
 
                 # Проверка, что таблица, относится к показателям.
-                if (len(first_row_cells) > 1 and
-                        first_row_cells[0].text == "Наименование показателя" and
-                        first_row_cells[1].text == "Результат" and
-                        "Требования НД" in first_row_cells[2].text):
+                if self.check_that_table_consist_indicators(first_row_cells):
                     indicators = {}
-
                     # Цикл по строкам, начиная со второй.
                     for _, row in enumerate(table.rows[1:], start=1):
 
@@ -218,8 +215,3 @@ def add_spaces_between_digits_and_letters(text: str) -> str:
             result += text[i]
     result += text[-1]
     return result
-
-
-print(WordFileParser(FILE_1).get_all_required_data_from_word_file())
-print(WordFileParser(FILE_2).get_all_required_data_from_word_file())
-print(WordFileParser(FILE_3).get_all_required_data_from_word_file())
