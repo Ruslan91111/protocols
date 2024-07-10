@@ -1,6 +1,5 @@
 """
-
-Конвертация фалов в папке из pdf в txt.
+Модуль для конвертации файлов в папке из pdf в txt.
 
 Файл содержит код, направленный на конвертацию файлов из формата pdf в формат txt.
 для запуска вызвать функцию convert_all_pdf_in_dir_to_word(), затем ввести путь к папке
@@ -21,18 +20,56 @@
     def convert_all_pdf_in_dir_to_word() - основная функция по преобразованию файлов из
         формата word в формат pdf
 
+    Пример использования:
+        convert_all_pdf_in_dir_to_word()
+
 """
 import os.path
 import time
+from enum import Enum
 from typing import Optional
 import psutil
 import py_win_keyboard_layout
 import pyautogui
 import pyperclip
 
-from constants import (FineReaderScreenshots, FINE_READER_PROCESS,
-                       WORD_PROCESS, MESSAGE_FOR_USER_GET_DIR_WITH_PDF_FILES)
 from exceptions import ScreenshotNotFoundException
+
+
+##################################################################################
+# Константы и enum классы
+##################################################################################
+class FineReaderScreenshots(Enum):
+    """
+    Пути к скриншотам, необходимым для работы с FineReader с помощью pyautogui.
+    """
+    FINE_READER_DESKTOP: str = r'./screenshots/fine_reader_desktop.png'
+    FINE_READER_PANEL: str = r'./screenshots/fine_reader_panel.png'
+    FINE_READER_LOADING: str = r'./screenshots/fine_reader_loading.png'
+    BUTTON_CONVERT_TO_WORD_MAIN_MENU: str = r'./screenshots/button_convert_to_word_main_menu.png'
+    BLUE_BUTTON_CONVERT_TO_WORD: str = r'./screenshots/blue_button_convert_to_word.png'
+    DATA_OF_MODIFICATION: str = r'./screenshots/data_of_modification.png'
+    INPUT_FILE_NAME: str = r'../screenshots/input_file_name.png'
+    PROCESS_OF_CONVERSION: str = r'./screenshots/process_of_conversion.png'
+    BUTTON_CANCEL: str = r'./screenshots/button_cancel.png'
+    SAVE_BUTTON: str = r'./screenshots/save_button.png'
+    REMOVE_MARK_FROM_SAVE_PICTURES: str = r'./screenshots/save_pictures.png'
+    REMARK: str = r'./screenshots/remark.png'
+
+
+FINE_READER_PROCESS = 'FineReader.exe'
+
+WORD_PROCESS = 'WINWORD.EXE'
+
+MESSAGE_FOR_USER_GET_DIR_WITH_PDF_FILES = (
+    'Введите полный путь (включая сетевой диск) до директории, '
+    'в которой находятся файлы формата PDF, нуждающиеся в конвертации в формат Word:'
+    '\n>>>')
+
+MESSAGE_FOR_USER_GET_DIR_WITH_WORD_FILES = (
+    'Введите полный путь (включая сетевой диск) до директории, '
+    'в которой будут находиться файлы Word после конвертации:'
+    '\n>>>')
 
 
 ##################################################################################
@@ -235,7 +272,7 @@ def convert_all_pdf_in_dir_to_word() -> None:
 
         # Нажать кнопку сохранить.
         wait_and_click_on_the_screenshot(FineReaderScreenshots.SAVE_BUTTON.value)
-        time.sleep(30)
+        time.sleep(40)
 
         # Закрыть word файл, который открывается автоматически после конвертации.
         terminate_the_proc(WORD_PROCESS)

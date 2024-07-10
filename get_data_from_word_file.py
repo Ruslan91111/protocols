@@ -19,12 +19,24 @@ import re
 from docx import Document
 import docx2txt
 
-from constants import REQUIRED_KEYS_FOR_PARSING_FIRST_PAGE
 from comparison_results_and_norms import compare_result_and_norms
+
 
 # Множество для хранения заголовков таблицы, для пропуска при высчитывании соответствия нормам.
 KEYS_IN_INDICATORS_FOR_PASS = {'Токсичные элементы, мг/кг:',
             'Пестициды, мг/кг:', }
+
+# Ключи для поиска на первой странице протокола.
+REQUIRED_KEYS_FOR_PARSING_FIRST_PAGE = (
+    'Место отбора проб',
+    'Дата и время отбора проб',
+    'Сопроводительные документы',
+    'Группа продукции',
+    'Наименование продукции',
+    'Дата производства продукции',
+    'Производитель (фирма, предприятие, организация)',
+    'Дата проведения исследований'
+)
 
 
 class WordFileParser:
@@ -47,7 +59,8 @@ class WordFileParser:
     def _find_substring_with_number_and_date(self):
         """Найти и вернуть подстроку с номером и датой протокола"""
         index_start_protocol = self.all_text_from_file.find('Протокол исп')
-        index_end_protocol = index_start_protocol + self.all_text_from_file[index_start_protocol:].find('.')
+        index_end_protocol = (index_start_protocol +
+                              self.all_text_from_file[index_start_protocol:].find('.'))
         name_and_date_of_protocol = self.all_text_from_file[index_start_protocol:index_end_protocol]
         name_and_date_of_protocol = name_and_date_of_protocol.replace('\t', '').replace('\n', '')
         return name_and_date_of_protocol
@@ -76,8 +89,7 @@ class WordFileParser:
             date_protocol = self._extract_protocol_date(text_with_date)
             number_protocol = number_protocol.group().replace(' ', '').replace('\t', '')
             return number_protocol, date_protocol
-        else:
-            return 'Номер протокола не найден', 'Дата протокола не найдена'
+        return 'Номер протокола не найден', 'Дата протокола не найдена'
 
     def get_all_items_from_tables(self) -> dict:
         """ Собрать в словарь, все данные из таблиц word файла. """
@@ -124,7 +136,8 @@ class WordFileParser:
         required_data_from_tables = _find_code_of_store(required_data_from_tables)
         return required_data_from_tables
 
-    def check_that_table_consist_indicators(self, first_row_cells):
+    def check_that_table_consist_indicators(self, first_row_cells) -> bool:
+        """ Проверка, что таблица относится к Показателям. """
         if (len(first_row_cells) > 1 and
                 (re.search(r"Наименование", first_row_cells[0].text)) and
                 (re.search(r"Результат", first_row_cells[1].text)) and

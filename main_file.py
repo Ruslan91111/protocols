@@ -1,17 +1,28 @@
-import json
+"""
+Основной файл пакета
+ содержит класс ProtocolMainWorker - связующий класс для работы всего пакета protocols.
+ Консолидирует в себе работу классов и модулей всего пакета.
+
+     def __init__(self, dir_path):
+       :param dir_path - директория с файлами word
+
+"""
 import os
 
-import pandas as pd
-from sqlalchemy.exc import IntegrityError
-
-from constants import DIR_WITH_WORD, KEYS_FOR_MAPPING_MODEL_PROTOCOL
-from get_data_from_word_file import WordFileParser
-from return_in_excel import make_one_df_from_protocols
-from work_with_tables_in_db import ProtocolManager, engine
+from league_sert.convert_files_in_dir import convert_all_pdf_in_dir_to_word
+from league_sert.get_data_from_word_file import WordFileParser
+from return_in_excel import write_protocols_from_db_in_xlsx_file
+from work_with_tables_in_db import ProtocolManager
 
 
-class ProtocolToDBWorker:
-    def __init__(self, dir_path):
+PATH_TO_XLSX_FILE_WITH_PROTOCOLS = r'../protocols_from_db.xlsx'
+
+
+class ProtocolMainWorker:
+    """ Основной - связующий класс для работы всего пакета protocols.
+     Консолидирует в себе работу классов и модулей всего пакета.
+     """
+    def __init__(self, dir_path: str):
         self.dir_path = dir_path
         self.protocol_manager = ProtocolManager()
 
@@ -23,6 +34,10 @@ class ProtocolToDBWorker:
     def write_protocol_in_db(self, data_for_db):
         """ Записать протокол в БД. """
         self.protocol_manager.add_protocol_to_db(data_for_db)
+
+    def conver_pdf_to_words(self):
+        """ Получить словарь данных из word файла. """
+        convert_all_pdf_in_dir_to_word()
 
     def write_protocols_in_dir_to_db(self):
         """ Перебрать word файлы в папке, распарсить каждый файл в словарь,
@@ -37,19 +52,21 @@ class ProtocolToDBWorker:
                 print(f'При записи данных из файла {file} в БД '
                       f'произошла ошибка {error})')
 
-    def protocols_from_db_to_excel(self):
+    def protocols_from_db_write_to_excel(self, path_to_output_xlsx_file):
+        """ Записать все хранящиеся в БД протоколы в xlsx файл."""
         all_protocols = self.protocol_manager.get_all_protocols()
-        make_one_df_from_protocols(all_protocols, r'protocols_from_db.xlsx')
+        write_protocols_from_db_in_xlsx_file(all_protocols, path_to_output_xlsx_file)
 
 
-worker = ProtocolToDBWorker(r'C:\Users\RIMinullin\Desktop\для ворда\в высоком качестве\word_files')
-# worker.protocol_manager.delete_all_protocols_from_table()
-# worker.write_protocols_in_dir_to_db()
-# protocol_manager = ProtocolManager()
-# protocols = protocol_manager.get_all_protocols()
-
-worker.protocols_from_db_to_excel()
-
-
-
-
+if '__main__' == __name__:
+    worker = ProtocolMainWorker(
+        r'C:\Users\RIMinullin\Desktop\для ворда\в высоком качестве\word_files')
+    # worker.conver_pdf_to_words()
+    data_from_new_type_of_protocol = worker.get_data_from_word_file(
+        r'C:\Users\RIMinullin\Documents\протоколы\молочка\word_files\scan1.docx')
+    print(data_from_new_type_of_protocol)
+    # worker.protocol_manager.delete_all_protocols_from_table()
+    # worker.write_protocols_in_dir_to_db()
+    # protocol_manager = ProtocolManager()
+    # protocols = protocol_manager.get_all_protocols()
+    # worker.protocols_from_db_write_to_excel(PATH_TO_XLSX_FILE_WITH_PROTOCOLS)

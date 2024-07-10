@@ -1,4 +1,10 @@
-""" Модели данных."""
+"""
+Модели данных, используемые при работе с БД.
+
+  class Store(Base): - Модель - магазины
+
+  class Protocol(Base): - Модель - протоколы
+"""
 from sqlalchemy import Column, Integer, String, ForeignKey, JSON
 from sqlalchemy.orm import relationship, declarative_base
 
