@@ -24,7 +24,7 @@ TYPES_OF_STATUSES_OF_RESULTS = (r'не обнаружен[о ы]',
                                 '±',
                                 '0')
 
-PATTERNS_FOR_SEARCH_VALUE = r'\d+[\.|,]?\d*'
+PATT_VALUE = r'\d+[\.|,]?\d*'
 
 
 def _find_out_type_of_the_value(value: str, statuses: tuple) -> str:
@@ -38,7 +38,7 @@ def _find_out_type_of_the_value(value: str, statuses: tuple) -> str:
     return ''
 
 
-def compare_result_and_norms(result: str, norm: str) -> bool:
+def compare_res_and_norms(result: str, norm: str) -> bool:
     """ Сравнить результат исследования с нормой и
     вернуть соответствует ли результат нормам или нет."""
 
@@ -51,7 +51,7 @@ def compare_result_and_norms(result: str, norm: str) -> bool:
 
     if (type_of_norm in {'отсутствие', 'не допускаются', '-'} and
             type_of_result in {'<', 'не более'}):
-        result_value_digit = float(re.search(PATTERNS_FOR_SEARCH_VALUE, result).
+        result_value_digit = float(re.search(PATT_VALUE, result).
                                    group().replace(',', '.'))
         if result_value_digit and result_value_digit < 0.1:
             return True
@@ -63,17 +63,17 @@ def compare_result_and_norms(result: str, norm: str) -> bool:
             result_base_value = float(result[:plus_minus_index].replace(",", '.'))
             tolerance = float(result[plus_minus_index + 1:].replace(',', '.'))
             result_value_with_tolerance = result_base_value + tolerance
-            norm_value = float(re.search(PATTERNS_FOR_SEARCH_VALUE, norm).group().replace(',', '.'))
+            norm_value = float(re.search(PATT_VALUE, norm).group().replace(',', '.'))
             if result_value_with_tolerance < norm_value:
                 return True
 
-        result_value_digit = float(re.search(PATTERNS_FOR_SEARCH_VALUE,
+        result_value_digit = float(re.search(PATT_VALUE,
                                              result).group().replace(',', '.'))
 
         if result_value_digit == 0:
             return True
 
-        norm_value_digit = float(re.search(PATTERNS_FOR_SEARCH_VALUE, norm).
+        norm_value_digit = float(re.search(PATT_VALUE, norm).
                                  group().replace(',', '.'))
         if result_value_digit and norm_value_digit and (result_value_digit <= norm_value_digit):
             return True
