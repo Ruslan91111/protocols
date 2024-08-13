@@ -3,7 +3,7 @@
 
 Код модуля обрабатывает word файл и получает из него нужные данные,
 подлежащие передаче для дальнейшей работе по преобразования и сравнения.
-Необходимые для дальнейшей работы данные становятся свойствами объекта класса MainDataGetter.
+Необходимые данные становятся свойствами объекта класса MainDataGetter.
 Содержит классы и методы, направленные на извлечение данных.
 
 Класс:
@@ -50,14 +50,14 @@ class TypesOfTable(enum.Enum):
     """ Паттерны для определения типа таблицы. """
     MAIN: str = r'Заявитель'
     SAMPLE: str = r'Шифр пробы'
-    RESULTS: str = r'(Показатели|Наименование\sпоказателя)|(№ п/п\s?Место отбора пробы)'
+    RESULTS: str = r'(Показатели|Наименование\sпоказателя)|Место отбора пробы|Объект смыва'
     MEASURING: str = r'Наименование средства измерения'
     PROD_CONTROL: str = r'№ п/п\s?Место измерений'
 
 
 class TextPatt(enum.Enum):
     """ Паттерны для определения типа таблицы. """
-    SUBSTRING_START: str = r'Протокол\s+испытаний'
+    SUBSTRING_START: str = r'П\s?р\s?о\s?т\s?о\s?к\s?о\s?л\s+и\s?с\s?п\s?ы\s?т\s?а\s?н\s?и\s?й'
     SUBSTRING_END: str = r'г.'
     NUMBER: str = r'№?([\d/]+\s?-Д)'
     DATE: str = r'«?(\d{2})»?(\w{3,})(\d{4})'
@@ -68,9 +68,9 @@ class ProdControlPatt(enum.Enum):
     производственного контроля. """
     START_SUBSTR: str = r'ПРОТОКОЛ\s?№?'
     DATE: str = r'«\s?(\d{2})\s?»?\s?(\w{3,})\s?(\d{4})'
-    NUMB_AND_DATE_OF_MEASUR = r'№ Акта и дата проведения измерений:\s*([\d\w\s\.]+)\sг.'
+    NUMB_AND_DATE_OF_MEASUR = r'№ Акта и дата проведения измерений:\s*([\d\w\s\.]+)\s[гГ][,.]'
     PLACE_OF_MEASUR = (r'Адрес проведения измерений:'
-                            r'\s*([\d\w\s\№\,\.]+)[\d\s\.]*Сведения о средствах измерения')
+                            r'\s*([\s\S]+)[\d\s\.]*Сведения о средствах измерения')
     START_OF_CONCLUSION = r'ЗАКЛЮЧЕНИЕ'
     INNER_PART_OF_CONCLUSION = r'- на[\s\w\d\,\.]*\n\n'
 
@@ -81,14 +81,17 @@ def prepare_for_work_with_tables(word_file: str) -> Document():
     return document
 
 
-def find_out_type_of_table(text_from_first_two_cells: str) -> TypesOfTable:
+def find_out_type_of_table(text_from_first_two_cells: str) -> TypesOfTable | None:
     """ Определить тип таблицы по содержанию первой строки. """
     for pattern in TypesOfTable:
-        if re.match(pattern.value, text_from_first_two_cells):
+        if re.search(pattern.value, text_from_first_two_cells):
             return pattern.name
+        if re.search(r'Данная проба по исследованным ', text_from_first_two_cells):
+            return None
+    raise Exception(f'Для таблицы, начинающейся с {text_from_first_two_cells} не найдено подходящего типа таблицы. ')
 
 
-def get_main_information(text) -> tuple[str, str]:
+def get_main_numb_and_date(text) -> tuple[str, str]:
     """ Найти и вернуть номер и дату протокола. """
     substring_start = re.search(TextPatt.SUBSTRING_START.value, text).start()
     substring_end = (re.search(TextPatt.SUBSTRING_END.value,
@@ -166,27 +169,31 @@ class CollectorFromTable:
 def collect_prod_control_data(text) -> dict:
     """ Найти и вернуть данные, относящиеся к измерениям
     производственного контроля. """
-    substr_start = re.search(ProdControlPatt.START_SUBSTR.value, text).start()
-    prod_control_text = text[substr_start:]
-    number_of_protocol = re.search(TextPatt.NUMBER.value, prod_control_text).group(1)
+    try:
+        substr_start = re.search(ProdControlPatt.START_SUBSTR.value, text).start()
+        prod_control_text = text[substr_start:]
+        number_of_protocol = re.search(TextPatt.NUMBER.value, prod_control_text).group(1)
 
-    match = re.search(ProdControlPatt.DATE.value, prod_control_text)
-    date_of_protocol = (match.group(1) + ' ' + match.group(2) + ' ' + match.group(3))
+        match = re.search(ProdControlPatt.DATE.value, prod_control_text)
+        date_of_protocol = (match.group(1) + ' ' + match.group(2) + ' ' + match.group(3))
 
-    match = re.search(ProdControlPatt.NUMB_AND_DATE_OF_MEASUR.value, prod_control_text)
-    date_of_measurement = match.group(1)
+        match = re.search(ProdControlPatt.NUMB_AND_DATE_OF_MEASUR.value, prod_control_text)
+        date_of_measurement = match.group(1)
 
-    match = re.search(ProdControlPatt.PLACE_OF_MEASUR.value, prod_control_text)
-    place_of_measurement = match.group(1).strip()
+        match = re.search(ProdControlPatt.PLACE_OF_MEASUR.value, prod_control_text)
+        place_of_measurement = match.group(1).strip()
 
-    inner_conclusion = re.search(ProdControlPatt.INNER_PART_OF_CONCLUSION.value,
-                                 prod_control_text).group().strip()
+        inner_conclusion = re.search(ProdControlPatt.INNER_PART_OF_CONCLUSION.value,
+                                     prod_control_text).group().strip()
 
-    return {'number_of_protocol': number_of_protocol,
-            'date_of_protocol': date_of_protocol,
-            'date_of_measurement': date_of_measurement,
-            'place_of_measurement': place_of_measurement,
-            'inner_conclusion': inner_conclusion}
+        return {'number_of_protocol': number_of_protocol,
+                'date_of_protocol': date_of_protocol,
+                'date_of_measurement': date_of_measurement,
+                'place_of_measurement': place_of_measurement,
+                'inner_conclusion': inner_conclusion}
+
+    except AttributeError:
+        print('Таблицы производственного контроля не найдено')
 
 
 class MainCollector:
@@ -199,7 +206,6 @@ class MainCollector:
         self.main_number = None
         self.main_date = None
         self.prod_control_data = None
-        # self.data_from_tables: Any
 
     def get_data_from_tables(self):
         """ Получить все данные из таблиц"""
@@ -222,7 +228,7 @@ class MainCollector:
     def get_main_information(self):
         """ Получить основные данные из файла. """
         if not self.main_number or not self.main_date:
-            self.main_number, self.main_date = get_main_information(
+            self.main_number, self.main_date = get_main_numb_and_date(
                 self.get_string())
 
     def get_prod_control_data(self):

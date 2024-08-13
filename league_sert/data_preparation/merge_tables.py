@@ -2,7 +2,7 @@
 Модуль для финальной обработки данных из таблиц.
 
 Код добавляет таблицы показателей в соответствующую таблицу образцов,
-удаляет лишние данные и определяет тип таблицы и прописывает его в ключе таблицы.
+удаляет лишние данные, определяет тип таблицы и прописывает его в ключе таблицы.
 
 Функции:
 
@@ -77,13 +77,23 @@ def determine_names_of_tables(tables: Tables) -> Tables:
             result[(key[0], 'manuf_prod')] = value
             continue
 
+        if manuf_prod == 'Производство магазина':
+            result[(key[0], 'store_prod')] = value
+            continue
+
         object_of_test = value.get('Объект исследования', False)
+        if not object_of_test:
+            object_of_test = value.get('Объект исследований', False)
+
         if object_of_test:
+            object_of_test = object_of_test.replace(',', '',).replace(' ', '')
             if 'Воздух' in object_of_test:
                 result[(key[0], 'air')] = value
                 continue
             if 'Вода' in object_of_test:
                 result[(key[0], 'water')] = value
+            if 'Смывы' in object_of_test:
+                result[(key[0], 'washings')] = value
 
     return result
 

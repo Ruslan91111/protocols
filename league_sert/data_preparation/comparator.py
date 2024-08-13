@@ -1,5 +1,10 @@
 """
-Модуль для сравнения результатов исследований и норм.
+Модуль для сравнения результатов исследований и норм. Принимает и обрабатывает два значения,
+которые сравнивает, исходя из типа значений. Возвращает результат сравнения в виде
+bool | list[bool]. list[bool] - возвращается, когда результат содержит число с погрешностью.
+
+Пример использования:
+    - create_conformity_conclusion(result: str, norm: str)
 
 Классы:
 
@@ -63,7 +68,7 @@ class Comparator:
     def compare_not_allowed(self):
         """ Сравнение, когда нормы определены в виде
         'не допускаются'. """
-        self.conclusion = self.result == 0
+        self.conclusion = True if self.result == 0 or self.result == 0.01 else False
 
     def compare_at_least(self):
         """ Сравнение, когда нормы определены в виде
@@ -90,10 +95,13 @@ class Comparator:
             ComparTypes.AT_LEAST.name: self.compare_at_least,
             ComparTypes.NO_MORE.name: self.compare_no_more,
             ComparTypes.DIGIT.name: self.compare_no_more,
+            ComparTypes.NO_CHANGE.name: self.compare_no_more,
         }
         comparison_method = comparison_methods.get(self.comparison_type)
         if comparison_method:
             comparison_method()
+        else:
+            raise Exception('Не найден подходящий метод сравнения')
 
 
 def create_conformity_conclusion(result: str, norm: str) -> bool | list[bool]:

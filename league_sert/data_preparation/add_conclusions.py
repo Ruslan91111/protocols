@@ -1,6 +1,7 @@
 """
 Модуль для добавления в каждую таблицу из переданных данных выводов о соответствии
-результатов исследования нормам для каждого конкретного показателя.
+результатов исследования нормам для каждого конкретного показателя и наличие нарушений
+в целом для всей таблицы.
 
 Классы:
     - ConclusionCreator:
@@ -15,27 +16,39 @@
     - add_conclusions_for_all_tables:
         Добавить выводы о соответствии норм для всех таблиц.
 
+            :param: - tables_data: dict - данные из таблиц после работы модуля file-parser.py
+
+Пример использования:
+    - add_conclusions_for_all_tables(tables_data)
+
 """
 import re
 
 from league_sert.data_preparation.comparator import create_conformity_conclusion
+from league_sert.data_preparation.exceptions import TypeOfIndicatorTableError, NoneConformityError
 
 
 class ConclusionCreator:
     """ Класс для добавления выводов о соответствии результатов нормам для показателей.
-    и общего вывода о наличии нарушений для всей таблицы. """
+    и общего вывода о наличии нарушений для всей таблицы.
+    """
+
     def __init__(self, table: list[list]):
+        """ Конструктор:
+            :param table - одна таблица, строки которой представлены в виде списков. """
         self.table = table  # Таблица показателей исследования
         self.violation_main_digit = False  # Нарушения во всей таблице для основных показателей.
         self.violation_digit_with_dev = False  # для показателей с отклонением.
         self.row = None  # Текущая строка.
+        self.value = None  # Значения для показателя для словаря
         self.type_of_table = self.determine_table_type()
         self.row_values = {}  # Набор параметров для записи в результат.
         self.result_table = {}  # Выходные данные.
         self.conformity = None
 
     def determine_table_type(self) -> str:
-        """ Определить тип таблицы. """
+        """ Определить тип таблицы. От типа таблицы зависит как будут
+        формироваться значения для последующего сравнения и записи в итог."""
 
         first_row = self.table[0]
 
@@ -43,6 +56,11 @@ class ConclusionCreator:
                 re.search(r"(Результат|Результат измерений)", first_row[1]) and
                 re.search(r"Требования", first_row[2])):
             return 'indicators'
+
+        if (re.search(r"(Наименование|Показатели)", first_row[1]) and
+                re.search(r"(Результат|Результат измерений)", first_row[2]) and
+                re.search(r"Требования", first_row[3])):
+            return 'indicators_type2'
 
         if (re.search(r"Место отбора пробы", first_row[1]) and
                 re.search(r"Наименование", first_row[2]) and
@@ -54,52 +72,54 @@ class ConclusionCreator:
                 re.search(r"Единицы", first_row[4])):
             return 'prod_control'
 
-        print('Не определен тип таблицы')
+        if (re.search(r"(Объект смыва)", first_row[1]) and
+                re.search(r"(Результат|Результат измерений)", first_row[3]) and
+                re.search(r"Требования", first_row[4])):
+            return 'washings'
 
-    def _row_indicator(self):
-        """ Добавить в результат строку с показателями. """
-        self.result_table[self.row_values['name']] = {
-            'result': self.row_values['result'],
-            'norm': self.row_values['norm'],
-            'norm_doc': self.row_values['norm_doc'],
-            **({'conformity_main': self.conformity} if isinstance(self.conformity, bool) else
-               {'conformity_main': self.conformity[0],
-                'conformity_deviation': self.conformity[1]})}
+        # Если тип таблицы с показателями не определен поднять исключение.
+        raise TypeOfIndicatorTableError()
 
-    def _row_indicator_air(self):
-        """ Добавить в результат строку по показателям воздух. """
-        self.result_table[self.row_values['number']] = {
-            'place_meas': self.row_values['place_meas'],
-            'name_indic': self.row_values['name_indic'],
-            'result': self.row_values['result'],
-            'norm': self.row_values['norm'],
-            'norm_doc': self.row_values['norm_doc'],
-            ** ({'conformity_main': self.conformity} if isinstance(self.conformity, bool) else
+    def _update_conformity(self):
+        """ Добавить в словарь вывод о соответствии нормам. """
+        return ({'conformity_main': self.conformity} if isinstance(self.conformity, bool) else
                 {'conformity_main': self.conformity[0],
-                 'conformity_deviation': self.conformity[1]})}
+                 'conformity_deviation': self.conformity[1]})
 
-    def _row_prod_control(self):
+    def _form_indic_or_air(self):
+        """ Добавить в результат строку с показателями. """
+        self.value = {'result': self.row_values['result'],
+                      'norm': self.row_values['norm'],
+                      'norm_doc': self.row_values['norm_doc']}
+
+    def _form_prod_control(self):
         """ Добавить в результат строку по производственному контролю. """
-        self.result_table[self.row_values['number']] = {
-            'place_meas': self.row_values['place_meas'],
-            'parameter': self.row_values['parameter'],
-            'unit': self.row_values['unit'],
-            'result': self.row_values['result'],
-            'norm': self.row_values['norm'],
-            **({'conformity_main': self.conformity} if isinstance(self.conformity, bool) else
-               {'conformity_main': self.conformity[0],
-                'conformity_deviation': self.conformity[1]})}
+        self.value = {'parameter': self.row_values['parameter'],
+                      'unit': self.row_values['unit'],
+                      'result': self.row_values['result'],
+                      'norm': self.row_values['norm']}
+
+    def _form_washings(self):
+        """ Добавить в результат строку по производственному контролю. """
+        self.value = {'result': self.row_values['result'],
+                      'norm': self.row_values['norm'],
+                      'norm_doc_of_method': self.row_values['norm_doc_of_method']}
 
     def append_row(self):
-        """ Добавить строку в результат в зависимости от типа таблицы."""
-        if self.type_of_table == 'indicators':
-            self._row_indicator()
+        """ Добавить строку в результат. Логика обработки и структура строки определяется
+         в зависимости от типа таблицы."""
+        methods = {
+            'indicators': self._form_indic_or_air,
+            'indicators_type2': self._form_indic_or_air,
+            'prod_control': self._form_prod_control,
+            'indicators_air': self._form_indic_or_air,
+            'washings': self._form_washings
+        }
 
-        if self.type_of_table == 'prod_control':
-            self._row_prod_control()
-
-        if self.type_of_table == 'indicators_air':
-            self._row_indicator_air()
+        method_of_form_value = methods.get(self.type_of_table, None)
+        method_of_form_value()
+        self.value.update(self._update_conformity())
+        self.result_table[self.row_values['name']] = self.value
 
     def check_valid_row(self):
         """ Проверить валидная ли строка. """
@@ -110,25 +130,44 @@ class ConclusionCreator:
     def determine_params(self):
         """ Определить набор параметров для сравнения и последующей записи. """
         if self.type_of_table == 'indicators':
-            self.row_values = {'name': self.row[0], 'result': self.row[1],
-                               'norm': self.row[2], 'norm_doc': self.row[3]}
+            self.row_values = {'name': self.row[0],
+                               'result': self.row[1],
+                               'norm': self.row[2],
+                               'norm_doc': self.row[3]}
+
+        if self.type_of_table == 'indicators_type2':
+            self.row_values = {'name': self.row[1],
+                               'result': self.row[2],
+                               'norm': self.row[3],
+                               'norm_doc': self.row[4]}
 
         elif self.type_of_table == 'prod_control':
-            self.row_values = {'number': self.row[0], 'place_meas': self.row[1],
+            self.row_values = {'name': self.row[1],
                                'parameter': self.row[2] + self.row[3],
-                               'unit': self.row[4], 'result': self.row[5],
+                               'unit': self.row[4],
+                               'result': self.row[5],
                                'norm': self.row[6]}
 
         elif self.type_of_table == 'indicators_air':
-            self.row_values = {'number': self.row[0], 'place_meas': self.row[1],
+            self.row_values = {'name': self.row[1],
                                'name_indic': self.row[2],
                                'result': self.row[3], 'norm': self.row[4],
                                'norm_doc': self.row[5]}
+
+        elif self.type_of_table == 'washings':
+            self.row_values = {'washings_object': self.row[1],
+                               'name': self.row[2],
+                               'result': self.row[3],
+                               'norm': self.row[4],
+                               'norm_doc_of_method': self.row[4]}
 
     def make_conformity(self):
         """ Сделать выводы о соответствии показателей и норм. """
         self.conformity: bool | tuple[bool] = create_conformity_conclusion(
             self.row_values['result'], self.row_values['norm'])
+
+        if self.conformity is None:
+            raise NoneConformityError(self.row_values['result'], self.row_values['norm'])
 
     def check_violations_for_table(self):
         """ Сделать и добавить в результат вывод о соответствии нормам для всей таблицы."""
@@ -169,7 +208,7 @@ def append_conclusions(indicators: list[list]) -> dict | None:
     return conclusions.result_table
 
 
-def add_conclusions_for_all_tables(tables_data):
+def add_conclusions_for_all_tables(tables_data: dict) -> dict:
     """ Добавить выводы о соответствии норм для всех таблиц. """
     for key, value in tables_data.items():
         if key[1] not in {'RESULTS', 'PROD_CONTROL'}:

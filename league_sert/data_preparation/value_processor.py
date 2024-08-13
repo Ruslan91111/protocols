@@ -21,6 +21,9 @@ enum классы:
     - ConvertValueTypes:
         Тип преобразования значения.
 
+Пример использования:
+    processed_value = to_process_the_value(value)
+
 """
 from enum import Enum
 import re
@@ -39,9 +42,11 @@ class ConvertValueTypes(Enum):
     NO_MORE: str = r'до \d+,?\d*'  # до 1,5
     WITHIN: str = r'\d+\,?\d*\s?-\s?\d+\,?\d*\b'  # 2,0 - 4,2
     LESS: str = r'менее \d+,?\d*'  # менее 0,10
-    NOT_FOUND: str = r'не обнаружено'  # не обнаружено в 25,0 г
+    NOT_FOUND: str = r'не обнаружено|не обнаружены'  # не обнаружено в 25,0 г
     DIGIT: str = r'\d+,?\d*'  # 9,0
     NONE: str = r'^\-$|^$'  # '-'
+    NO_CHANGE: str = r'отсутствие изменений|отсутствие'
+    NOT_ALLOWED: str = r'не допускаются'
 
 
 class ValueProcessor:
@@ -108,6 +113,7 @@ class ValueProcessor:
             self.types.NOT_FOUND.name: self.process_not_found,
             self.types.NONE.name: self.process_not_found,
             self.types.WITHIN.name: self.process_within,
+            self.types.NOT_ALLOWED.name: self.process_not_found(),
         }
         processing_method = processing_methods.get(self.type_of_processing, self.process_other)
         if processing_method:
@@ -118,7 +124,8 @@ def to_process_the_value(value: str):
     """ Обработать значение и вернуть в преобразованном виде.
     Функция для использования класса ValueProcessor"""
     value_type = define_value_type(value, ConvertValueTypes)
-    return ValueProcessor(value, value_type).new_value
+    new_value = ValueProcessor(value, value_type).new_value
+    return new_value
 
 
 def define_value_type(value: str, types_of_value: [ComparTypes | ConvertValueTypes]) -> str:
@@ -127,4 +134,6 @@ def define_value_type(value: str, types_of_value: [ComparTypes | ConvertValueTyp
     for type_value in types_of_value:
         if re.search(type_value.value, value.lower()):
             return type_value.name
-    return ''
+
+    raise Exception(f'Не определен подходящий тип для значения или сравнения'
+                    f'value - {value}, класс сравнения - {types_of_value}')
