@@ -3,12 +3,10 @@
 
 class MyException(Exception):
     """Базовое исключение для всех исключений, связанных с приложением."""
-    pass
 
 
 class TypeOfIndicatorTableError(MyException):
-    """Исключение, возникающее при неверном вводе пользователя."""
-
+    """ Исключение, возникающее, когда не определен тип таблицы с показателями. """
     def __init__(self, message='Не определен тип таблицы показателей, '
                                'невозможно в дальнейшем сравнить и сохранить результаты.'):
         self.message = message
@@ -16,17 +14,33 @@ class TypeOfIndicatorTableError(MyException):
 
 
 class NoneConformityError(MyException):
-    """Если в результате сравнения вывод None"""
+    """ Исключение, возникающее, когда в результате сравнения вывод None"""
     def __init__(self, result, norm):
         self.message = (f'В результате вычисления соответствия результата нормам произошла ошибка. '
-                   f'result - {result}, norm - {norm}')
+                        f'result - {result}, norm - {norm}')
         super().__init__(self.message)
 
 
-class TypeViolationsError(MyException):
-    """Исключение, возникающее при неверном вводе пользователя."""
-    def __init__(self, violations, norm):
-        self.message = (f'У сформированного вывода для всей таблицы неверный тип данных '
-                   f'violations - {violations}, тип данных - {type(violations)}')
+class MethodOfComparisonError(MyException):
+    """Исключение, возникающее, когда не найден подходящий под тип сравнения метод сравнения. """
+    def __init__(self, comparison_type):
+        self.message = f'Не найден подходящий метод сравнения типа сравнения - {comparison_type}'
         super().__init__(self.message)
-        
+
+
+class DetermineValueTypeError(MyException):
+    """ Исключение, возникающее, когда текст значения или сравнения не подходит под паттерны"""
+    def __init__(self, value, types_of_value):
+        self.message = (f'Не определен подходящий тип для значения или сравнения'
+                        f'value - {value}, класс сравнения - {types_of_value}')
+        super().__init__(self.message)
+
+
+class TypeOfTableError(MyException):
+    """Исключение, возникающее, когда по содержимому первых двух ячеек
+    не представляется возможным определить тип таблицы: RESULT, MAIN, SAMPLE."""
+
+    def __init__(self, text_from_first_two_cells):
+        self.message = (f'Для таблицы, начинающейся с {text_from_first_two_cells} '
+                        f'не найдено подходящего типа таблицы. ')
+        super().__init__(self.message)

@@ -13,3 +13,7 @@ class ComparTypes(Enum):
     NO_MORE: str = r'\bне более\b'  # не более 220,0
     DIGIT: str = r'\d+,?\d*'  # 220
     NO_CHANGE: str = r'отсутствие изменений'
+
+
+DIGITS_IN_DEGREE = {'⁰': 0, '¹': 1, '²': 2, '³': 3, '⁴': 4,
+                    '⁵': 5, '⁶': 6, '⁷': 7, '⁸': 8, '⁹': 9}

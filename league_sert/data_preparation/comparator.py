@@ -34,6 +34,7 @@ enum классы:
 
 """
 from league_sert.data_preparation.common import ComparTypes
+from league_sert.data_preparation.exceptions import MethodOfComparisonError
 from league_sert.data_preparation.value_processor import to_process_the_value, \
     define_value_type
 
@@ -101,7 +102,7 @@ class Comparator:
         if comparison_method:
             comparison_method()
         else:
-            raise Exception('Не найден подходящий метод сравнения')
+            raise MethodOfComparisonError(self.comparison_type)
 
 
 def create_conformity_conclusion(result: str, norm: str) -> bool | list[bool]:
@@ -109,6 +110,7 @@ def create_conformity_conclusion(result: str, norm: str) -> bool | list[bool]:
      Возвращает либо bool если значение результат исследования одно число,
      и list[bool] если значение результата исследования имеет погрешность
      в виде '±' """
+
     comparator = Comparator(result, norm)
     comparator.compare()
     return comparator.conclusion

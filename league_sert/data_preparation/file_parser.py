@@ -7,7 +7,7 @@
 Содержит классы и методы, направленные на извлечение данных.
 
 Класс:
-    - MainDataCollector:
+    - MainCollector:
         Верхне-уровневый класс для сбора данных.
 
     - CollectorFromTable:
@@ -31,7 +31,7 @@
         Найти и вернуть данные, относящиеся к измерениям производственного контроля
 
 Пример использования:
-    data_getter = MainDataGetter(FILE)
+    data_getter = MainCollector(FILE)
     data_getter.collect_all_data() - собрать все данные
     data_getter.main_number - атрибут
     data_getter.main_date - атрибут
@@ -44,6 +44,8 @@ import re
 
 from docx import Document, table
 from docx2txt import docx2txt
+
+from league_sert.data_preparation.exceptions import TypeOfTableError
 
 
 class TypesOfTable(enum.Enum):
@@ -81,14 +83,30 @@ def prepare_for_work_with_tables(word_file: str) -> Document():
     return document
 
 
-def find_out_type_of_table(text_from_first_two_cells: str) -> TypesOfTable | None:
+def get_text_with_superscripts(cell):
+    """ Получить текст ячейки, обрабатывая при этом числа со степенью. """
+    text = ""
+
+    for paragraph in cell.paragraphs:
+        for run in paragraph.runs:
+            if run.font.superscript:
+                if run.text == 'б':
+                    text += f"{'⁰¹²³⁴⁵⁶⁷⁸⁹'[int(6)]}"
+                else:
+                    text += f"{'⁰¹²³⁴⁵⁶⁷⁸⁹'[int(run.text)]}"
+            else:
+                text += run.text
+    return text
+
+
+def find_out_type_of_table(first_two_cells_text: str) -> TypesOfTable | None:
     """ Определить тип таблицы по содержанию первой строки. """
     for pattern in TypesOfTable:
-        if re.search(pattern.value, text_from_first_two_cells):
+        if re.search(pattern.value, first_two_cells_text):
             return pattern.name
-        if re.search(r'Данная проба по исследованным ', text_from_first_two_cells):
+        if re.search(r'Данная проба по исследованным ', first_two_cells_text):
             return None
-    raise Exception(f'Для таблицы, начинающейся с {text_from_first_two_cells} не найдено подходящего типа таблицы. ')
+    raise TypeOfTableError(first_two_cells_text)
 
 
 def get_main_numb_and_date(text) -> tuple[str, str]:
@@ -137,7 +155,8 @@ class CollectorFromTable:
             one_row = []
             cells = row.cells
             for cell in cells:
-                one_row.append(cell.text)
+                cell_text = get_text_with_superscripts(cell)
+                one_row.append(cell_text)
             self.value_of_current_table.append(one_row)
         self.converted_data_from_tables[self.key_of_current_table] = self.value_of_current_table
 
