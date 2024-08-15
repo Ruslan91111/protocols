@@ -207,7 +207,7 @@ def collect_prod_control_data(text) -> dict:
 
         return {'number_of_protocol': number_of_protocol,
                 'date_of_protocol': date_of_protocol,
-                'date_of_measurement': date_of_measurement,
+                'act': date_of_measurement,
                 'place_of_measurement': place_of_measurement,
                 'inner_conclusion': inner_conclusion}
 

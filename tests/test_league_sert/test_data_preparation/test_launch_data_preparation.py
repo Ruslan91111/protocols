@@ -8,4 +8,6 @@ def test_extract_and_prepare_data():
     """ Тестирование основной функции модуля. Проверка, что результат всей работы по
     извлечению, преобразованию, добавлению выводов соответствует ожидаемому. """
     data_result = extract_and_prepare_data(r'47109 23.05.2024.docx')
-    assert data_result == EXPECTED_FROM_PARSER
+    assert data_result.data_from_tables == EXPECTED_FROM_PARSER
+    assert data_result.main_number == '4225/24-Д'
+    assert data_result.main_date == '23 мая 2024'

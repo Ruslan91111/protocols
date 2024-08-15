@@ -79,7 +79,7 @@ def test_collect_prod_control_data():
     result_data = collect_prod_control_data(PROD_CONTROL_STR)
     assert result_data['number_of_protocol'] == '4218/24-Д'
     assert result_data['date_of_protocol'] == '07 мая 2024'
-    assert result_data['date_of_measurement'] == '4218 ОТ 02.05.2024'
+    assert result_data['act'] == '4218 ОТ 02.05.2024'
     assert result_data['place_of_measurement'] == (
         'Ленинградская обл., г. Гатчина, ул. Куприна, д.48А, лит. А, магазин № 47109')
     assert result_data['inner_conclusion'] == (

@@ -19,7 +19,8 @@ from league_sert.data_preparation.merge_tables import refine_and_merge_tables
 
 def extract_and_prepare_data(word_file: str):
     """Запуск кода модуля."""
-    data_getter = MainCollector(word_file)
-    data_getter.collect_all_data()
-    data_getter.data_from_tables = add_conclusions_for_all_tables(data_getter.data_from_tables)
-    return refine_and_merge_tables(data_getter.data_from_tables)
+    data_collector = MainCollector(word_file)
+    data_collector.collect_all_data()
+    data_collector.data_from_tables = add_conclusions_for_all_tables(data_collector.data_from_tables)
+    data_collector.data_from_tables = refine_and_merge_tables(data_collector.data_from_tables)
+    return data_collector

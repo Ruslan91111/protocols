@@ -1,8 +1,5 @@
 """ Исключения для пакета data_preparation. """
-
-
-class MyException(Exception):
-    """Базовое исключение для всех исключений, связанных с приложением."""
+from league_sert.exceptions import MyException
 
 
 class TypeOfIndicatorTableError(MyException):
