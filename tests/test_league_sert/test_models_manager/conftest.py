@@ -1,5 +1,5 @@
+""" Фикстуры, используемые более, чем в одном модуле. """
 import pytest
-
 
 data_for_main_collector = {
     'file_path': 'path.docx', 'tables_from_file': 'tables', 'text': 'text',
@@ -62,29 +62,31 @@ data_for_main_collector = {
                         'conformity_main': True},
                     'violations_of_norms': (
                         False, False)}]},
+
         (13, 'PROD_CONTROL'): {
-            'number_of_protocol': '4218/24-Д',
-            'date_of_protocol': '07 мая 2024',
-            'act': '4218 ОТ 02.05.2024',
-            'place_of_measurement': 'Ленинградская обл., г. Гатчина, '
-                                    'ул. Куприна, д.48А, лит. А, магазин № 47109',
-            'inner_conclusion': '- на момент проведения измерений параметры микроклимата, '
-                                'уровни шума и общей вибрации соответствуют требованиям',
-            'indicators': [
-                {
-                    'Отдел «Овощи/фрукты», рабочее место работника торгового зала(Па)': {
-                        'parameter': 'Относительная влажность воздуха'
-                                     'Относительная влажность воздуха', 'unit': '%',
-                        'result': '41,1±3,0',
-                        'norm': '15-75', 'conformity_main': True, 'conformity_deviation': True},
-                    'violations_of_norms': (False, False)
-                }
-            ]
-        }}}
+            'Отдел «Овощи/фрукты», рабочее место работника торгового зала(Па)': {
+                'parameter': 'Относительная влажность воздухаОтносительная влажность воздуха',
+                'unit': '%',
+                'result': '41,1±5,8',
+                'norm': '15-75', 'conformity_main': True, 'conformity_deviation': True},
+
+            'Отдел «Хлебобулочные изделия», рабочее место работника торгового зала(Па)': {
+                'parameter': 'Относительная влажность воздухаОтносительная влажность воздуха',
+                'unit': '%',
+                'result': '41,3±5,8', 'norm': '15-75', 'conformity_main': True,
+                'conformity_deviation': True},
+
+            'Торговый зал у холодильной витрины с молочной продукцией': {
+                'parameter': 'Вибрация общаяZo', 'unit': 'ДБ',
+                'result': 'менее 70', 'norm': '80',
+                'conformity_main': True},
+
+            'violations_of_norms': (False, False)}}}
 
 
 class MainCollectorDoubler:
     """ Дублер класса MainCollector. """
+
     def __init__(self, attrs_dict):
         for key, value in attrs_dict.items():
             setattr(self, key, value)

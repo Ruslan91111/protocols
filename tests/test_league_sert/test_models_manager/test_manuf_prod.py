@@ -1,7 +1,7 @@
 import pytest
 
 from league_sert.models import ManufProd
-from league_sert.models_manager import create_manuf_prod
+from league_sert.models_creator import create_manuf_prod
 
 
 @pytest.fixture(scope='module')
@@ -33,5 +33,5 @@ def test_create_manuf_prod(test_data):
     assert object_of_model.prod_date == test_data['Дата производства продукции']
     assert object_of_model.manuf == test_data['Производитель (фирма, предприятие, организация)']
     assert object_of_model.indic == test_data['indicators']
-    assert object_of_model.indic_compl == test_data['indicators'][0]['violations_of_norms']
-    assert isinstance(object_of_model.indic_compl, tuple)
+    assert object_of_model.violat_main == test_data['indicators'][0]['violations_of_norms'][0]
+    assert object_of_model.violat_dev == test_data['indicators'][0]['violations_of_norms'][1]

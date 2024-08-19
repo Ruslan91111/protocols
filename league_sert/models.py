@@ -5,7 +5,7 @@
 Остальные сущности - модели(подразделяются в зависимости от объекта исследований)
 связаны ключами с основными данными.
 """
-from sqlalchemy import Column, Integer, String, ForeignKey, JSON
+from sqlalchemy import Column, Integer, String, ForeignKey, JSON, Boolean
 from sqlalchemy.orm import relationship
 
 from database.base import Base
@@ -27,8 +27,10 @@ class MainProtocol(Base):
     # Связи с другими сущностями: различными составляющими протокола
     prod_control = relationship("ProdControl", back_populates="main_prot")
     manuf_prod = relationship("ManufProd", back_populates="main_prot")
+    store_prod = relationship("StoreProd", back_populates="main_prot")
     air = relationship("Air", back_populates="main_prot")
     water = relationship("Water", back_populates="main_prot")
+    washings = relationship("Washings", back_populates="main_prot")
 
 
 class ProdControl(Base):
@@ -45,7 +47,8 @@ class ProdControl(Base):
     conclusion = Column(String)  # Заключение
     conclusion_compl = Column(String)  # Установлены ли нарушения в заключении
     indic = Column(JSON)  # Результаты измерений.
-    indic_compl = Column(String)  # Вывод о наличии несоответствий показателей.
+    violat_main = Column(Boolean)  # Вывод о наличии несоответствий показателей.
+    violat_dev = Column(Boolean)  # Вывод о наличии несоответствий для чисел с отклонением.
     # Связь с основными данными.
     main_prot_id = Column(Integer, ForeignKey('main_prot.id'))
     main_prot = relationship('MainProtocol', back_populates='prod_control')
@@ -62,11 +65,33 @@ class ManufProd(Base):
     prod_name = Column(String)  # Наименования продукции.
     prod_date = Column(String)  # Дата производства продукции
     manuf = Column(String)  # Производитель.
-    indic = Column(JSON)  # Результат исследований
-    indic_compl = Column(String)  # Вывод о наличии несоответствий показателей.
+    indic = Column(JSON)  # Результаты измерений.
+    violat_main = Column(Boolean)  # Вывод о наличии несоответствий показателей.
+    violat_dev = Column(Boolean)  # Вывод о наличии несоответствий для чисел с отклонением.
     # Связь с основными данными.
     main_prot_id = Column(Integer, ForeignKey('main_prot.id'))
     main_prot = relationship('MainProtocol', back_populates='manuf_prod')
+
+
+class StoreProd(Base):
+    """ Данные о пробе - продукция производителя. """
+    __tablename__ = 'store_prod'
+
+    id = Column(Integer, primary_key=True, autoincrement=True,
+                nullable=False, unique=True)
+
+    # Обычные поля
+    sample_code = Column(String)  # Шифр пробы.
+    prod_name = Column(String)  # Наименования продукции.
+    prod_date = Column(String)  # Дата производства продукции
+    manuf = Column(String)  # Производитель.
+
+    indic = Column(JSON)  # Результаты измерений.
+    violat_main = Column(Boolean)  # Вывод о наличии несоответствий показателей.
+    violat_dev = Column(Boolean)  # Вывод о наличии несоответствий для чисел с отклонением.
+    # Связь с основными данными.
+    main_prot_id = Column(Integer, ForeignKey('main_prot.id'))
+    main_prot = relationship('MainProtocol', back_populates='store_prod')
 
 
 class Air(Base):
@@ -78,7 +103,9 @@ class Air(Base):
     # Обычные поля
     sample_code = Column(String)  # Шифр пробы.
     indic = Column(JSON)  # Результат исследований
-    indic_compl = Column(String)  # Вывод о наличии несоответствий показателей.
+    violat_main = Column(Boolean)  # Вывод о наличии несоответствий показателей.
+    violat_dev = Column(Boolean)  # Вывод о наличии несоответствий для чисел с отклонением.
+
     # Связь с основными данными.
     main_prot_id = Column(Integer, ForeignKey('main_prot.id'))
     main_prot = relationship('MainProtocol', back_populates='air')
@@ -92,8 +119,23 @@ class Water(Base):
                 nullable=False, unique=True)
     test_object = Column(String)  # Объект исследований.
     sample_code = Column(String)  # Шифр пробы.
-    indic = Column(JSON)  # Результаты исследований
-    indic_compl = Column(String)  # Вывод о наличии несоответствий показателей.
+    indic = Column(JSON)  # Результаты измерений.
+    violat_main = Column(Boolean)  # Вывод о наличии несоответствий показателей.
+    violat_dev = Column(Boolean)  # Вывод о наличии несоответствий для чисел с отклонением.
     # Связь с основными данными.
     main_prot_id = Column(Integer, ForeignKey('main_prot.id'))
     main_prot = relationship('MainProtocol', back_populates='water')
+
+
+class Washings(Base):
+    """ Объект исследования - Смывы. """
+    __tablename__ = 'washings'
+
+    id = Column(Integer, primary_key=True, autoincrement=True,
+                nullable=False, unique=True)
+    indic = Column(JSON)  # Результаты измерений.
+    violat_main = Column(Boolean)  # Вывод о наличии несоответствий показателей.
+    violat_dev = Column(Boolean)  # Вывод о наличии несоответствий для чисел с отклонением.
+    # Связь с основными данными.
+    main_prot_id = Column(Integer, ForeignKey('main_prot.id'))
+    main_prot = relationship('MainProtocol', back_populates='washings')

@@ -1,7 +1,8 @@
+""" Протестировать создание модели MainProtocol """
 import pytest
 
 from league_sert.models import MainProtocol
-from league_sert.models_manager import create_main_protocol
+from league_sert.models_creator import create_main_protocol
 
 
 @pytest.fixture(scope='module')

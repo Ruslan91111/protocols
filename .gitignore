@@ -35,5 +35,6 @@ build/
 .coverage.*
 .cache
 
-*docx
-# Модули и пакеты
+# файлы
+*.docx
+*.database

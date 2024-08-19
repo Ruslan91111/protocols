@@ -1,7 +1,7 @@
 import pytest
 
 from league_sert.models import MainProtocol, ManufProd, ProdControl
-from league_sert.models_manager import create_main_protocol, process_violations, create_prod_control
+from league_sert.models_creator import create_main_protocol, create_common_violations, create_prod_control
 
 
 @pytest.fixture(scope='module')
@@ -38,5 +38,6 @@ def test_create_prod_control(test_data):
     assert object_of_model.conclusion == test_data['inner_conclusion']
     assert object_of_model.conclusion_compl == True
     assert object_of_model.indic == test_data['indicators']
-    assert object_of_model.indic_compl == test_data['indicators'][0]['violations_of_norms']
-    assert isinstance(object_of_model.indic_compl, tuple)
+    assert object_of_model.violat_main == test_data['indicators'][0]['violations_of_norms'][0]
+    assert object_of_model.violat_dev == test_data['indicators'][0]['violations_of_norms'][1]
+

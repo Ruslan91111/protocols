@@ -1,7 +1,8 @@
 """ Тестирование модуля launch_data_preparation"""
 
 from league_sert.data_preparation.launch_data_preparation import extract_and_prepare_data
-from tests.test_league_sert.test_data_preparation.expected_data_from_launch import EXPECTED_FROM_PARSER
+from tests.test_league_sert.test_data_preparation.expected_data_from_launch import \
+    EXPECTED_FROM_PARSER
 
 
 def test_extract_and_prepare_data():
