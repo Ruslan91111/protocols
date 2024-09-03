@@ -37,8 +37,8 @@ class ConclusionCreator:
         """ Конструктор:
             :param table - одна таблица, строки которой представлены в виде списков. """
         self.table = table  # Таблица показателей исследования
-        self.violation_main_digit = False  # Нарушения во всей таблице для основных показателей.
-        self.violation_digit_with_dev = False  # для показателей с отклонением.
+        # self.violation_main_digit = False  # Нарушения во всей таблице для основных показателей.
+        # self.violation_digit_with_dev = False  # для показателей с отклонением.
         self.row = None  # Текущая строка.
         self.value = None  # Значения для показателя для словаря
         self.type_of_table = self.determine_table_type()
@@ -169,22 +169,22 @@ class ConclusionCreator:
         if self.conformity is None:
             raise NoneConformityError(self.row_values['result'], self.row_values['norm'])
 
-    def check_violations_for_table(self):
-        """ Сделать и добавить в результат вывод о соответствии нормам для всей таблицы."""
-        if (isinstance(self.conformity, bool) and not self.conformity
-                and self.violation_main_digit is False):
-            self.violation_main_digit = True
+    # def check_violations_for_table(self):
+    #     """ Сделать и добавить в результат вывод о соответствии нормам для всей таблицы."""
+    #     if (isinstance(self.conformity, bool) and not self.conformity
+    #             and self.violation_main_digit is False):
+    #         self.violation_main_digit = True
+    #
+    #     elif isinstance(self.conformity, tuple):
+    #         if not self.conformity[0]:
+    #             self.violation_main_digit = True
+    #         if not self.conformity[1]:
+    #             self.violation_digit_with_dev = True
 
-        elif isinstance(self.conformity, tuple):
-            if not self.conformity[0]:
-                self.violation_main_digit = True
-            if not self.conformity[1]:
-                self.violation_digit_with_dev = True
-
-    def write_violations_for_table(self):
-        """ Записать в словарь с таблицей вывод о наличии нарушений норм. """
-        self.result_table['violations_of_norms'] = (self.violation_main_digit,
-                                                    self.violation_digit_with_dev)
+    # def write_violations_for_table(self):
+    #     """ Записать в словарь с таблицей вывод о наличии нарушений норм. """
+    #     self.result_table['violations_of_norms'] = (self.violation_main_digit,
+    #                                                 self.violation_digit_with_dev)
 
     def append_conclusions(self):
         """ Добавить выводы о соответствии показателей нормам в таблицу. """
@@ -195,10 +195,10 @@ class ConclusionCreator:
 
             self.determine_params()
             self.make_conformity()
-            self.check_violations_for_table()
+            # self.check_violations_for_table()
             self.append_row()
 
-        self.write_violations_for_table()
+        # self.write_violations_for_table()
 
 
 def append_conclusions(indicators: list[list]) -> dict | None:

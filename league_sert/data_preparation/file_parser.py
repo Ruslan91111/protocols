@@ -260,3 +260,10 @@ class MainCollector:
         self.get_main_information()
         self.get_data_from_tables()
         self.get_prod_control_data()
+
+    def merge_prod_control(self):
+        for key, value in self.data_from_tables.items():
+            if key[1] == 'PROD_CONTROL':
+                updated = {**self.prod_control_data, 'indicators': [value]}
+                self.data_from_tables[key] = updated
+                continue

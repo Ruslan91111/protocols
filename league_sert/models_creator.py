@@ -61,80 +61,152 @@ def create_common_violations(table_data: dict) -> List[bool]:
 
 def create_main_protocol(main_number, main_date, table_data: dict):
     """ Создать объект модели MainProtocol.  """
-    return MainProtocol(number=main_number,
-                        date=main_date,
-                        sampling_site=table_data['Место отбора проб'],
-                        sampling_date=table_data['Дата и время отбора проб'])
-
-
-def create_manuf_prod(table_data: dict):
-    """ Создать объект модели ManufProd.  """
-    violations = create_common_violations(table_data)
-    return ManufProd(sample_code=table_data['Шифр пробы'],
-                     prod_name=table_data['Наименование продукции'],
-                     prod_date=table_data['Дата производства продукции'],
-                     manuf=table_data['Производитель (фирма, предприятие, организация)'],
-                     indic=table_data['indicators'],
-                     violat_main=violations[0],
-                     violat_dev=violations[1])
-
-
-def create_store_prod(table_data: dict):
-    """ Создать объект модели ManufProd.  """
-    violations = create_common_violations(table_data)
-    return StoreProd(sample_code=table_data['Шифр пробы'],
-                     prod_name=table_data['Наименование продукции'],
-                     prod_date=table_data['Дата производства продукции'],
-                     manuf=table_data['Производитель (фирма, предприятие, организация)'],
-                     indic=table_data['indicators'],
-                     violat_main=violations[0],
-                     violat_dev=violations[1])
-
-
-def create_air(table_data: dict):
-    """ Создать объект модели Air.  """
-    violations = create_common_violations(table_data)
-    return Air(sample_code=table_data['Шифр пробы'],
-               indic=table_data['indicators'],
-               violat_main=violations[0],
-               violat_dev=violations[1])
-
-
-def create_water(table_data: dict):
-    """ Создать объект модели Water.  """
-    violations = create_common_violations(table_data)
-    return Water(test_object=table_data['Объект исследований'],
-                 sample_code=table_data['Шифр пробы'],
-                 indic=table_data['indicators'],
-                 violat_main=violations[0],
-                 violat_dev=violations[1])
-
-
-def create_washings(table_data: dict):
-    """ Создать объект модели Water.  """
-    violations = create_common_violations(table_data)
-    return Washings(indic=table_data['indicators'],
-                    violat_main=violations[0],
-                    violat_dev=violations[1])
+    return MainProtocol(
+        number=main_number,
+        date=main_date,
+        sampling_site=table_data['Место отбора проб'],
+        sampling_date=table_data['Дата и время отбора проб']
+    )
 
 
 def create_prod_control(**kwargs):
     """ Создать объект модели ProdControl.  """
+    # violations = create_common_violations(kwargs)
+    return ProdControl(
+        number=kwargs['number_of_protocol'],
+        date=kwargs['date_of_protocol'],
+        act=kwargs['act'],
+        address=kwargs['place_of_measurement'],
+        conclusion=kwargs['inner_conclusion'],
+        conclusion_compl=True if kwargs['inner_conclusion'] else False,
 
-    violations = create_common_violations(kwargs)
-    return ProdControl(number=kwargs['number_of_protocol'],
-                       date=kwargs['date_of_protocol'],
-                       act=kwargs['act'],
-                       address=kwargs['place_of_measurement'],
-                       indic=kwargs['indicators'],
-                       violat_main=violations[0],
-                       violat_dev=violations[1],
-                       conclusion=kwargs['inner_conclusion'],
-                       conclusion_compl=True if kwargs['inner_conclusion'] else False)
+        name_indic=kwargs['name_indic'],
+        result=kwargs['result'],
+        norm=kwargs['norm'],
+        conformity_main=kwargs['conformity_main'],
+        conformity_deviation=kwargs.get('conformity_deviation', True),
+        parameter=kwargs['parameter'],
+        unit=kwargs['unit'],
+        #
+        # violat_main=violations[0],
+        # violat_dev=violations[1],
+    )
+
+
+def create_manuf_prod(**kwargs):
+    """ Создать объект модели ManufProd.  """
+    # violations = create_common_violations(kwargs)
+    return ManufProd(
+        sample_code=kwargs['Шифр пробы'],
+        prod_name=kwargs['Наименование продукции'],
+        prod_date=kwargs['Дата производства продукции'],
+        manuf=kwargs['Производитель (фирма, предприятие, организация)'],
+
+        name_indic=kwargs['name_indic'],
+        result=kwargs['result'],
+        norm=kwargs['norm'],
+        conformity_main=kwargs['conformity_main'],
+        conformity_deviation=kwargs.get('conformity_deviation', True),
+        norm_doc=kwargs['norm_doc'],
+
+        # violat_main=violations[0],
+        # violat_dev=violations[1]
+    )
+
+
+def create_store_prod(**kwargs):
+    """ Создать объект модели ManufProd.  """
+    # violations = create_common_violations(kwargs)
+    return StoreProd(
+        sample_code=kwargs['Шифр пробы'],
+        prod_name=kwargs['Наименование продукции'],
+        prod_date=kwargs['Дата производства продукции'],
+        manuf=kwargs['Производитель (фирма, предприятие, организация)'],
+
+        name_indic=kwargs['name_indic'],
+        result=kwargs['result'],
+        norm=kwargs['norm'],
+        conformity_main=kwargs['conformity_main'],
+        conformity_deviation=kwargs.get('conformity_deviation', True),
+        norm_doc=kwargs['norm_doc'],
+
+        # violat_main=violations[0],
+        # violat_dev=violations[1]
+    )
+
+
+def create_air(**kwargs):
+    """ Создать объект модели Air.  """
+    # violations = create_common_violations(kwargs)
+    return Air(
+        sample_code=kwargs['Шифр пробы'],
+        name_indic=kwargs['name_indic'],
+        result=kwargs['result'],
+        norm=kwargs['norm'],
+        conformity_main=kwargs['conformity_main'],
+        conformity_deviation=kwargs.get('conformity_deviation', True),
+        norm_doc=kwargs['norm_doc'],
+        # violat_main=violations[0],
+        # violat_dev=violations[1]
+    )
+
+
+def create_water(**kwargs):
+    """ Создать объект модели Water.  """
+    # violations = create_common_violations(kwargs)
+    return Water(
+        test_object=kwargs['Объект исследований'],
+        sample_code=kwargs['Шифр пробы'],
+        name_indic=kwargs['name_indic'],
+        result=kwargs['result'],
+        norm=kwargs['norm'],
+        conformity_main=kwargs['conformity_main'],
+        conformity_deviation=kwargs.get('conformity_deviation', True),
+        norm_doc=kwargs['norm_doc'],
+        # violat_main=violations[0],
+        # violat_dev=violations[1]
+    )
+
+
+def create_washings(**kwargs):
+    """ Создать объект модели Water.  """
+    # violations = create_common_violations(kwargs)
+    return Washings(
+        name_indic=kwargs['name_indic'],
+        result=kwargs['result'],
+        norm=kwargs['norm'],
+        conformity_main=kwargs['conformity_main'],
+        conformity_deviation=kwargs.get('conformity_deviation', True),
+        norm_doc=kwargs['norm_doc_of_method'],
+        # violat_main=violations[0],
+        # violat_dev=violations[1]
+    )
 
 
 ObjectsForDB = Dict[Tuple[int, str], Union[
     MainProtocol, ManufProd, ProdControl, Air, Water, Washings, StoreProd]]
+
+
+def create_objects_same_cls(table_data: dict, type_table):
+    methods = {
+        'manuf_prod': create_manuf_prod,
+        'store_prod': create_store_prod,
+        'air': create_air,
+        'water': create_water,
+        'washings': create_washings,
+        'PROD_CONTROL': create_prod_control,
+    }
+    result = []
+    method = methods.get(type_table, None)
+    indicators = table_data['indicators']
+    del table_data['indicators']
+    for row in indicators:
+        for k, v in row.items():
+            name_indic = k
+            value = v
+
+            result.append(method(name_indic=name_indic, **table_data, **value))
+    return result
 
 
 def create_objects(main_collector: MainCollector) -> ObjectsForDB:
@@ -148,20 +220,12 @@ def create_objects(main_collector: MainCollector) -> ObjectsForDB:
             objects_of_models[key] = create_main_protocol(main_collector.main_number,
                                                           main_collector.main_date,
                                                           value)
-        elif key[1] == 'manuf_prod':
-            objects_of_models[key] = create_manuf_prod(value)
-        elif key[1] == 'store_prod':
-            objects_of_models[key] = create_store_prod(value)
-        elif key[1] == 'air':
-            objects_of_models[key] = create_air(value)
-        elif key[1] == 'water':
-            objects_of_models[key] = create_water(value)
-        elif key[1] == 'washings':
-            objects_of_models[key] = create_washings(value)
-        elif key[1] == 'PROD_CONTROL':
-            objects_of_models[key] = create_prod_control(
-                **main_collector.prod_control_data, indicators=[value])
+
+
         else:
-            raise WrongNameOfTableError()
+            objects_of_models[key] = create_objects_same_cls(value, key[1])
 
     return objects_of_models
+
+
+
