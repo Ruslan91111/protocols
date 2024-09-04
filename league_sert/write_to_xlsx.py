@@ -1,31 +1,33 @@
-from sqlalchemy import create_engine, text
+from sqlalchemy import text
 
 from database.db_config import protocols_engine
 
 import pandas as pd
 
-sql_query = """
-SELECT id AS id_в_бд, number AS номер_основного_протокола, 
-    sampling_site AS место_отбора_проб, sampling_date AS дата_отбора_проб  
-FROM main_prot
-    LEFT
-
-"""
-
-
-sql_query_2 = """
+query_all = """
 -- Продукция изготовителя
 SELECT 
     mt.id AS id_в_бд, 
     mt.number AS номер_основного_протокола, 
-    mt.sampling_site AS место_отбора_проб, 
+    mt.store_address AS Место_отбора_проб, 
+    mt.store_code AS Код_магазина, 
     mt.sampling_date AS дата_отбора_проб,
+    
     'Продукция_производителя' AS Тип_исследования,
     mp.name_indic AS Наименование_показателя,
     mp.result AS Результат,
     mp.norm AS Норма,
-    mp.conformity_main AS Соответствие_нормам_основной_показатель,
-    mp.conformity_deviation AS Соответствие_нормам_показатель_с_отклонением,
+    CASE 
+        WHEN mp.conformity_main = 1 THEN 'соответствует' 
+        WHEN mp.conformity_main = 0 THEN 'не соответствует' 
+        ELSE 'неизвестно' 
+    END AS Соответствие_нормам_основной_показатель,
+
+    CASE 
+        WHEN mp.conformity_deviation = 1 THEN 'соответствует' 
+        WHEN mp.conformity_deviation = 0 THEN 'не соответствует' 
+        ELSE 'неизвестно' 
+    END AS Соответствие_нормам_показатель_с_отклонением,
     mp.norm_doc AS Нормативные_документы,
     
     NULL AS Параметр,    
@@ -51,7 +53,8 @@ UNION ALL
 SELECT
     mt.id AS id_в_бд, 
     mt.number AS номер_основного_протокола, 
-    mt.sampling_site AS место_отбора_проб, 
+    mt.store_address AS Место_отбора_проб, 
+    mt.store_code AS Код_магазина, 
     mt.sampling_date AS дата_отбора_проб,
     
     'Производство_магазина' AS Тип_исследования,
@@ -59,8 +62,17 @@ SELECT
     sp.name_indic AS Наименование_показателя,
     sp.result AS Результат,
     sp.norm AS Норма,
-    sp.conformity_main AS Соответствие_нормам_основной_показатель,
-    sp.conformity_deviation AS Соответствие_нормам_показатель_с_отклонением,
+    CASE 
+        WHEN sp.conformity_main = 1 THEN 'соответствует' 
+        WHEN sp.conformity_main = 0 THEN 'не соответствует' 
+        ELSE 'неизвестно' 
+    END AS Соответствие_нормам_основной_показатель,
+
+    CASE 
+        WHEN sp.conformity_deviation = 1 THEN 'соответствует' 
+        WHEN sp.conformity_deviation = 0 THEN 'не соответствует' 
+        ELSE 'неизвестно' 
+    END AS Соответствие_нормам_показатель_с_отклонением,
     sp.norm_doc AS Нормативные_документы,
     
     NULL AS Параметр,    
@@ -86,14 +98,25 @@ UNION ALL
 SELECT
     mt.id AS id_в_бд, 
     mt.number AS номер_основного_протокола, 
-    mt.sampling_site AS место_отбора_проб, 
+    mt.store_address AS Место_отбора_проб, 
+    mt.store_code AS Код_магазина, 
     mt.sampling_date AS дата_отбора_проб,
+    
     'Воздух' AS Тип_исследования,
     air.name_indic AS Наименование_показателя,
     air.result AS Результат,
     air.norm AS Норма,
-    air.conformity_main AS Соответствие_нормам_основной_показатель,
-    air.conformity_deviation AS Соответствие_нормам_показатель_с_отклонением,
+    CASE 
+        WHEN air.conformity_main = 1 THEN 'соответствует' 
+        WHEN air.conformity_main = 0 THEN 'не соответствует' 
+        ELSE 'неизвестно' 
+    END AS Соответствие_нормам_основной_показатель,
+
+    CASE 
+        WHEN air.conformity_deviation = 1 THEN 'соответствует' 
+        WHEN air.conformity_deviation = 0 THEN 'не соответствует' 
+        ELSE 'неизвестно' 
+    END AS Соответствие_нормам_показатель_с_отклонением,
     air.norm_doc AS Нормативные_документы,
     
     NULL AS Параметр,    
@@ -119,7 +142,8 @@ UNION ALL
 SELECT
     mt.id AS id_в_бд, 
     mt.number AS номер_основного_протокола, 
-    mt.sampling_site AS место_отбора_проб, 
+    mt.store_address AS Место_отбора_проб, 
+    mt.store_code AS Код_магазина, 
     mt.sampling_date AS дата_отбора_проб,
     
     'Вода' AS Тип_исследования,
@@ -127,8 +151,17 @@ SELECT
     water.name_indic AS Наименование_показателя,
     water.result AS Результат,
     water.norm AS Норма,
-    water.conformity_main AS Соответствие_нормам_основной_показатель,
-    water.conformity_deviation AS Соответствие_нормам_показатель_с_отклонением,
+    CASE 
+        WHEN water.conformity_main = 1 THEN 'соответствует' 
+        WHEN water.conformity_main = 0 THEN 'не соответствует' 
+        ELSE 'неизвестно' 
+    END AS Соответствие_нормам_основной_показатель,
+
+    CASE 
+        WHEN water.conformity_deviation = 1 THEN 'соответствует' 
+        WHEN water.conformity_deviation = 0 THEN 'не соответствует' 
+        ELSE 'неизвестно' 
+    END AS Соответствие_нормам_показатель_с_отклонением,
     
     water.norm_doc AS Нормативные_документы,
     
@@ -156,7 +189,8 @@ UNION ALL
 SELECT
     mt.id AS id_в_бд, 
     mt.number AS номер_основного_протокола, 
-    mt.sampling_site AS место_отбора_проб, 
+    mt.store_address AS Место_отбора_проб, 
+    mt.store_code AS Код_магазина, 
     mt.sampling_date AS дата_отбора_проб,
     
     'Смывы' AS Тип_исследования,
@@ -164,8 +198,17 @@ SELECT
     washings.name_indic AS Наименование_показателя,
     washings.result AS Результат,
     washings.norm AS Норма,
-    washings.conformity_main AS Соответствие_нормам_основной_показатель,
-    washings.conformity_deviation AS Соответствие_нормам_показатель_с_отклонением,    
+    CASE 
+        WHEN washings.conformity_main = 1 THEN 'соответствует' 
+        WHEN washings.conformity_main = 0 THEN 'не соответствует' 
+        ELSE 'неизвестно' 
+    END AS Соответствие_нормам_основной_показатель,
+
+    CASE 
+        WHEN washings.conformity_deviation = 1 THEN 'соответствует' 
+        WHEN washings.conformity_deviation = 0 THEN 'не соответствует' 
+        ELSE 'неизвестно' 
+    END AS Соответствие_нормам_показатель_с_отклонением,    
     washings.norm_doc AS Нормативные_документы,
     
     NULL AS Параметр,    
@@ -191,15 +234,25 @@ UNION ALL
 SELECT
     mt.id AS id_в_бд, 
     mt.number AS номер_основного_протокола, 
-    mt.sampling_site AS место_отбора_проб, 
+    mt.store_address AS Место_отбора_проб, 
+    mt.store_code AS Код_магазина, 
     mt.sampling_date AS дата_отбора_проб,
     
     'Производственный контроль' AS Тип_исследования,
     prod_control.name_indic AS Наименование_показателя,
     prod_control.result AS Результат,
     prod_control.norm AS Норма,
-    prod_control.conformity_main AS Соответствие_нормам_основной_показатель,
-    prod_control.conformity_deviation AS Соответствие_нормам_показатель_с_отклонением,    
+    CASE 
+        WHEN prod_control.conformity_main = 1 THEN 'соответствует' 
+        WHEN prod_control.conformity_main = 0 THEN 'не соответствует' 
+        ELSE 'неизвестно' 
+    END AS Соответствие_нормам_основной_показатель,
+
+    CASE 
+        WHEN prod_control.conformity_deviation = 1 THEN 'соответствует' 
+        WHEN prod_control.conformity_deviation = 0 THEN 'не соответствует' 
+        ELSE 'неизвестно' 
+    END AS Соответствие_нормам_показатель_с_отклонением,        
     
     NULL AS Нормативные_документы,
    
@@ -219,24 +272,26 @@ SELECT
         
 FROM main_prot mt
 JOIN prod_control ON mt.id = prod_control.main_prot_id  
-
 """
 
 
+def write_db_data_to_xlsx(sql_query: str, output_xlsx: str) -> None:
+    """ Извлечь данные по определенному sql запросу и записать
+    в xlsx файл. """
+
+    # Создание соединения и выполнение запроса
+    with protocols_engine.connect() as connection:
+        result = connection.execute(text(sql_query))
+
+        # Получение всех строк результата
+        rows = result.fetchall()
+
+        df = pd.DataFrame(rows)
+        df = df.sort_values(by='id_в_бд', ascending=True)
+        df.to_excel(output_xlsx, index=False)
 
 
-# Создание соединения и выполнение запроса
-with protocols_engine.connect() as connection:
-    # Пример сырого SQL-запроса для выборки данных
-    result = connection.execute(text(sql_query_2))
+xlsx_path = 'probe.xlsx'
 
-    # Получение всех строк результата
-    rows = result.fetchall()
-
-    # Печать результатов выборки
-    for row in rows:
-        print(row)
-
-    df = pd.DataFrame(rows)
-    df = df.sort_values(by='id_в_бд', ascending=True)
-    df.to_excel('probe.xlsx', index=False)
+if __name__ == '__main__':
+    write_db_data_to_xlsx(query_all, xlsx_path)

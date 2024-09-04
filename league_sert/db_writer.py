@@ -11,11 +11,10 @@ import sys
 import os
 
 from pathlib import Path
-from sqlalchemy.exc import IntegrityError
 
 from database.db_config import prot_session_maker
 from league_sert.data_preparation.launch_data_preparation import extract_and_prepare_data
-from league_sert.models_creator import ObjectsForDB, create_objects
+from league_sert.models.models_creator import ObjectsForDB, create_all_objects
 
 
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -27,7 +26,7 @@ def write_objects_to_db(objects: ObjectsForDB):
     """ Записать объекты, сформированные из word файла в БД.
     :param: objects: объекты моделей, подлежащих записи в БД."""
     with prot_session_maker() as session:
-        # try:
+        try:
             for key, value in objects.items():
                 # Добавление основного объекта в сессию
                 if key[1] == 'MAIN':
@@ -40,8 +39,8 @@ def write_objects_to_db(objects: ObjectsForDB):
                         session.add(obj)
             session.commit()
 
-        # except Exception as e:
-        #     print(e)
+        except Exception as e:
+            print(e)
 
 
 def process_and_write_files_to_db(dir_path):
@@ -51,7 +50,7 @@ def process_and_write_files_to_db(dir_path):
         if '$' in i:
             continue
         data_from_file = extract_and_prepare_data(dir_path + '\\' + i)
-        objects_for_db = create_objects(data_from_file)
+        objects_for_db = create_all_objects(data_from_file)
         write_objects_to_db(objects_for_db)
 
 
