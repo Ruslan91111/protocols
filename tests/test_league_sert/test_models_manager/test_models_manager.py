@@ -1,7 +1,7 @@
 import pytest
 
-from league_sert.models import MainProtocol, ProdControl, ManufProd, Air, Water
-from league_sert.models_creator import create_common_violations, create_objects
+from league_sert.models.models import MainProtocol, ProdControl, ManufProd, Air
+from league_sert.models.models_creator import create_common_violations, create_all_objects
 
 data_proc_viol = {'indicators': [{'violations_of_norms': (True, True)},
                                  {'violations_of_norms': (False, True)},
@@ -23,11 +23,16 @@ def test_create_all_objects(main_collector):
     """ Тестирование создание из данных, собранных MainCollector набора
     объектов моделей. """
 
-    objects = create_objects(main_collector)
-    assert len(objects) == 5
-    objects_content = list(objects.items())
-    assert isinstance(objects_content[0][1], MainProtocol)
-    assert isinstance(objects_content[1][1], ManufProd)
-    assert isinstance(objects_content[2][1], ManufProd)
-    assert isinstance(objects_content[3][1], Air)
-    assert isinstance(objects_content[4][1], ProdControl)
+    objects = create_all_objects(main_collector)
+    assert len(objects) == 7
+    assert isinstance(objects, dict)
+    assert isinstance(objects[(0, 'MAIN')], MainProtocol)
+    assert isinstance(objects[(1, 'manuf_prod')], list)
+    assert isinstance(objects[(1, 'manuf_prod')][0], ManufProd)
+    assert len(objects[(1, 'manuf_prod')]) == 7
+    assert isinstance(objects[(10, 'air')], list)
+    assert isinstance(objects[(10, 'air')][0], Air)
+    assert len(objects[(10, 'air')]) == 1
+    assert isinstance(objects[(13, 'PROD_CONTROL')], list)
+    assert isinstance(objects[(13, 'PROD_CONTROL')][0], ProdControl)
+    assert len(objects[(13, 'PROD_CONTROL')]) == 3

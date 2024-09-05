@@ -7,7 +7,7 @@
 связаны внешними ключами с основными данными.
 
 """
-from sqlalchemy import Column, Integer, String, ForeignKey, JSON, Boolean, DateTime
+from sqlalchemy import Column, Integer, String, ForeignKey, Boolean, Date
 from sqlalchemy.orm import relationship
 
 from database.base import Base
@@ -22,10 +22,10 @@ class MainProtocol(Base):
 
     # Обычные поля
     number = Column(String, nullable=True, unique=True)
-    date = Column(DateTime, nullable=True)
+    date = Column(Date, nullable=True)
     store_address = Column(String, nullable=True)  # Место отбора проб.
     store_code = Column(Integer, nullable=True)
-    sampling_date = Column(DateTime, nullable=True)  # Дата и время отбора проб.
+    sampling_date = Column(Date, nullable=True)  # Дата и время отбора проб.
 
     # Связи с другими сущностями: различными составляющими протокола
     prod_control = relationship("ProdControl", back_populates="main_prot")
@@ -43,7 +43,7 @@ class ProdControl(Base):
     id = Column(Integer, primary_key=True, autoincrement=True, nullable=False, unique=True)
     # Обычные поля
     number = Column(String)
-    date = Column(DateTime)
+    date = Column(Date)
     act = Column(String)  # Акт и дата проведения измерений.
     address = Column(String)  # Адрес проведения измерений.
     conclusion = Column(String)  # Заключение
@@ -97,7 +97,7 @@ class StoreProd(Base):
     # Обычные поля
     sample_code = Column(String)  # Шифр пробы.
     prod_name = Column(String)  # Наименования продукции.
-    prod_date = Column(DateTime)  # Дата производства продукции
+    prod_date = Column(Date)  # Дата производства продукции
     manuf = Column(String)  # Производитель.
 
     # Индикаторы

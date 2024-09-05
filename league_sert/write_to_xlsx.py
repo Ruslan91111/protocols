@@ -262,8 +262,12 @@ SELECT
     prod_control.date AS Дата_протокола_производственного_контроля,    
     prod_control.act AS Акт_производственного_контроля,    
     prod_control.address AS Адрес_отбора_проб_производственного_контроля,    
-    prod_control.conclusion AS Текст_заключения,    
-    prod_control.conclusion_compl AS Наличие_нарушений_в_заключении,   
+    prod_control.conclusion AS Текст_заключения,   
+    CASE 
+        WHEN prod_control.conclusion_compl = 1 THEN 'нарушения отсутствуют' 
+        WHEN prod_control.conclusion_compl = 0 THEN 'имеются нарушения' 
+    ELSE 'неизвестно' 
+    END AS Наличие_нарушений_в_заключении, 
      
     NULL AS Шифр_проб,
     NULL AS Наименование_товара,      
@@ -272,6 +276,8 @@ SELECT
         
 FROM main_prot mt
 JOIN prod_control ON mt.id = prod_control.main_prot_id  
+ORDER BY id_в_бд ASC
+
 """
 
 

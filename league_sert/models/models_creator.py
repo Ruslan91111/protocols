@@ -32,22 +32,21 @@ import re
 import sys
 from pathlib import Path
 from typing import Dict, Tuple, Union, List
-from datetime import datetime
+from datetime import datetime, date
 
 from league_sert.data_preparation.file_parser import MainCollector
 from league_sert.exceptions import TypeIndicatorsError
-
+from league_sert.models.exceptions import AttrNotFoundError
 
 BASE_DIR = Path(__file__).resolve().parent.parent.parent
 if BASE_DIR not in sys.path:
     sys.path.insert(0, str(BASE_DIR))
 
-from league_sert.models import (MainProtocol, ManufProd, Air, Water,
-                                ProdControl, Washings, StoreProd)
+from league_sert.models.models import (MainProtocol, ManufProd, Air, Water,
+                                       ProdControl, Washings, StoreProd)
 
 
 def create_common_violations(table_data: dict) -> List[bool]:
-
     """Вернуть вывод о наличии нарушений результатов
     нормам для всей таблицы целиком.
     :param table_data: Словарь с данными по одной таблиц показателей.
@@ -68,20 +67,20 @@ def create_common_violations(table_data: dict) -> List[bool]:
 
 def split_code_and_address(text: str) -> tuple[str, int]:
     """ Разбить место отбора проб на адрес и код магазина. """
-    pattern = r'(.+)\(№?(\d+)|(\d{5})(.*)'
+    pattern = r'(.+)\(№?\s*(\d+)|(\d{5})(.*)'
     match = re.search(pattern, text)
     if match:
         if match.group(1):
-            address = match.group(1).strip(', ')
+            address = match.group(1).strip(', ()')
             code = int(match.group(2))
         else:
-            address = match.group(4).strip(', ')
+            address = match.group(4).strip(', ()')
             code = int(match.group(3))
         return address, code
     raise Exception(f'Не найден адрес {text}')
 
 
-def create_date(date: str) -> datetime:
+def create_date(date_: str) -> date:
     """ Строку с датой преобразовать в объект datetime. """
     months = {
         'января': '1',
@@ -97,32 +96,43 @@ def create_date(date: str) -> datetime:
         'ноября': '11',
         'декабря': '12',
     }
-
+    date_ = re.sub(r'\s{2,}', ' ', date_)
     pattern = r'\d{2}.\d{2}.\d{2,4}'
-    match = re.search(pattern, date)
-
+    match = re.search(pattern, date_)
     if not match:
-        date = date.split(' ')
-        if len(date) < 3:
+        date_ = date_.split(' ')
+        if len(date_) < 3:
             raise ValueError('Некорректный формат даты.')
-        date[1] = months[date[1]]
-        date = date[:3]
-        date = '.'.join(date)
+        date_[1] = months[date_[1]]
+        date_ = '.'.join(date_[:3])
     else:
-        date = match.group()
+        date_ = match.group()
 
-    return datetime.strptime(date, '%d.%m.%Y')
+    date_ = datetime.strptime(date_, '%d.%m.%Y')
+    return date_.date()
+
+
+def validate_attribute(class_name, value, attr_name):
+    """ Проверить, что атрибут не None и не пустая строка. """
+    if value is None or value == '':
+        raise AttrNotFoundError(class_name, attr_name)
 
 
 def create_main_protocol(main_number, main_date, table_data: dict):
     """ Создать объект модели MainProtocol.  """
     address, code = split_code_and_address(table_data['Место отбора проб'])
-    date = create_date(table_data['Дата и время отбора проб'])
+    main_date = create_date(main_date)
+    sampling_date = create_date(table_data['Дата и время отбора проб'])
+
+    validate_attribute(MainProtocol, main_number, 'main_number')
+    validate_attribute(MainProtocol, main_date, 'main_date')
+    validate_attribute(MainProtocol, code, 'code')
+
     return MainProtocol(
         number=main_number,
-        date=date,
+        date=main_date,
         store_code=code,
-        sampling_date=date,
+        sampling_date=sampling_date,
         store_address=address)
 
 
@@ -176,7 +186,9 @@ def create_store_prod(**kwargs):
 
 
 def create_air(**kwargs):
-    """ Создать объект модели Air.  """
+    """ Создать объект модели Air. """
+    validate_attribute(Air, kwargs['name_indic'], 'name_indic')
+
     return Air(
         sample_code=kwargs['Шифр пробы'],
         name_indic=kwargs['name_indic'],

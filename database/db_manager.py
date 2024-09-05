@@ -30,7 +30,7 @@ if BASE_DIR not in sys.path:
 from database.db_config import protocols_engine, prot_session_maker
 from database.base import Base
 
-from league_sert.models import *
+from league_sert.models.models import *
 
 
 class DBManager:

@@ -1,34 +1,48 @@
 import pytest
 
-from league_sert.models import Air
-from league_sert.models_creator import create_air
+from league_sert.models.exceptions import AttrNotFoundError
+from league_sert.models.models import Air
+from league_sert.models.models_creator import create_air
 
 
 @pytest.fixture(scope='module')
 def test_data():
     """ Вернуть тестовые данные. """
-    return {'Шифр пробы': '2890-2', 'indicators': [
-            {
-                'Холодильная камера «Молочные продукты»': {
-                    'result': '0',
-                    'norm': '-',
-                    'norm_doc': 'СП 4695-88',
-                    'conformity_main': True},
-                'Холодильная камера«Молочные продукты»': {
-                    'result': '0',
-                    'norm': '-',
-                    'norm_doc': 'СП 4695-88',
-                    'conformity_main': True},
-                'violations_of_norms': (
-                    False, False)}]}
+    return {'name_indic': 'Холодильная камера «Молочные продукты»',
+            'Шифр пробы': '4639 - 1',
+            'Объект исследования': 'Воздух (микробная обсемеиенность)',
+            'Ненужный ключ': 'ненужное значение',
+            'result': '0', 'norm': '-',
+            'norm_doc': 'СП 4695-88', 'conformity_main': True}
 
 
 def test_create_air(test_data):
     """ Протестировать создание модели основных данных. """
-    object_of_model = create_air(test_data)
-    assert isinstance(object_of_model, Air)
-    assert object_of_model.sample_code == test_data['Шифр пробы']
-    assert object_of_model.indic == test_data['indicators']
-    assert object_of_model.violat_main == test_data['indicators'][0]['violations_of_norms'][0]
-    assert object_of_model.violat_dev == test_data['indicators'][0]['violations_of_norms'][1]
-    assert isinstance(object_of_model.violat_main, bool)
+    result_object = create_air(**test_data)
+    assert isinstance(result_object, Air)
+    assert result_object.sample_code == test_data['Шифр пробы']
+    assert result_object.name_indic == test_data['name_indic']
+    assert result_object.result == test_data['result']
+    assert result_object.norm == test_data['norm']
+    assert result_object.conformity_main == test_data['conformity_main']
+    assert result_object.conformity_deviation == True
+    assert isinstance(result_object.conformity_main, bool)
+
+
+@pytest.fixture(scope='module')
+def test_data_wrong():
+    """ Вернуть тестовые данные. """
+    return {'name_indic': '',
+            'Шифр пробы': '4639 - 1',
+            'Объект исследования': 'Воздух (микробная обсемененность)',
+            'Ненужный ключ': 'ненужное значение',
+            'result': '0', 'norm': '-',
+            'norm_doc': 'СП 4695-88', 'conformity_main': True}
+
+
+def test_create_air_error(test_data_wrong):
+    """ Протестировать возникновение исключения при создании объекта класса Air. """
+    with pytest.raises(AttrNotFoundError) as excinfo:
+        create_air(**test_data_wrong)
+    assert 'Air' in str(excinfo.value)
+    assert 'name_indic' in str(excinfo.value)
