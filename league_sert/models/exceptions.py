@@ -1,3 +1,4 @@
+""" Исключения для моделей и процесса их создания."""
 from league_sert.exceptions import MyException
 
 

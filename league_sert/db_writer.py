@@ -22,10 +22,10 @@ if BASE_DIR not in sys.path:
     sys.path.insert(0, str(BASE_DIR))
 
 
-def write_objects_to_db(objects: ObjectsForDB):
+def write_objects_to_db(objects: ObjectsForDB, session_maker):
     """ Записать объекты, сформированные из word файла в БД.
     :param: objects: объекты моделей, подлежащих записи в БД."""
-    with prot_session_maker() as session:
+    with session_maker() as session:
         try:
             for key, value in objects.items():
                 # Добавление основного объекта в сессию
@@ -51,7 +51,7 @@ def process_and_write_files_to_db(dir_path):
             continue
         data_from_file = extract_and_prepare_data(dir_path + '\\' + i)
         objects_for_db = create_all_objects(data_from_file)
-        write_objects_to_db(objects_for_db)
+        write_objects_to_db(objects_for_db, prot_session_maker)
 
 
 if __name__ == '__main__':

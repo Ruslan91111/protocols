@@ -35,10 +35,9 @@ class ConclusionCreator:
 
     def __init__(self, table: list[list]):
         """ Конструктор:
-            :param table - одна таблица, строки которой представлены в виде списков. """
+            :param table - одна таблица, строки которой представлены в виде списков.
+        """
         self.table = table  # Таблица показателей исследования
-        # self.violation_main_digit = False  # Нарушения во всей таблице для основных показателей.
-        # self.violation_digit_with_dev = False  # для показателей с отклонением.
         self.row = None  # Текущая строка.
         self.value = None  # Значения для показателя для словаря
         self.type_of_table = self.determine_table_type()
@@ -86,18 +85,27 @@ class ConclusionCreator:
                 {'conformity_main': self.conformity[0],
                  'conformity_deviation': self.conformity[1]})
 
-    def _form_indic_or_air(self):
+    def _form_indic(self):
         """ Добавить в результат строку с показателями. """
         self.value = {'result': self.row_values['result'],
                       'norm': self.row_values['norm'],
                       'norm_doc': self.row_values['norm_doc']}
 
+    def _form_air(self):
+        """ Добавить в результат строку с показателями. """
+        self.value = {'name': self.row_values['name_indic'],
+                      'sampling_site': self.row_values['name'],
+                      'result': self.row_values['result'],
+                      'norm': self.row_values['norm'],
+                      'norm_doc': self.row_values['norm_doc']}
+
     def _form_prod_control(self):
         """ Добавить в результат строку по производственному контролю. """
-        self.value = {'parameter': self.row_values['parameter'],
+        self.value = {'name': self.row_values['parameter'],
                       'unit': self.row_values['unit'],
                       'result': self.row_values['result'],
-                      'norm': self.row_values['norm']}
+                      'norm': self.row_values['norm'],
+                      'sampling_site': self.row_values['name']}
 
     def _form_washings(self):
         """ Добавить в результат строку по производственному контролю. """
@@ -108,18 +116,33 @@ class ConclusionCreator:
     def append_row(self):
         """ Добавить строку в результат. Логика обработки и структура строки определяется
          в зависимости от типа таблицы."""
-        methods = {
-            'indicators': self._form_indic_or_air,
-            'indicators_type2': self._form_indic_or_air,
-            'prod_control': self._form_prod_control,
-            'indicators_air': self._form_indic_or_air,
-            'washings': self._form_washings
-        }
+        methods = {'indicators': self._form_indic,
+                   'indicators_type2': self._form_indic,
+                   'prod_control': self._form_prod_control,
+                   'indicators_air': self._form_air,
+                   'washings': self._form_washings}
 
         method_of_form_value = methods.get(self.type_of_table, None)
         method_of_form_value()
         self.value.update(self._update_conformity())
-        self.result_table[self.row_values['name']] = self.value
+        self.save_key_in_result()
+
+    def save_key_in_result(self):
+        """ Сохранить ключ - показатель. В процессе проверить наличие ключа в результате,
+        если ключ уже имеется добавить цифру в конце ключа."""
+
+        # Если такой ключ уже есть.
+        if self.result_table.get(self.row_values['name'], False):
+            # Подставляем цифру в ключ
+            for i in range(50):
+                # Если ключ с цифрой тоже есть
+                if self.result_table.get(self.row_values['name'] + str(i), False):
+                    continue
+                # Если ключа с цифрой нет, то сохраняем
+                self.result_table[self.row_values['name'] + "_" + str(i)] = self.value
+                break
+        else:
+            self.result_table[self.row_values['name']] = self.value
 
     def check_valid_row(self):
         """ Проверить валидная ли строка. """
@@ -143,7 +166,7 @@ class ConclusionCreator:
 
         elif self.type_of_table == 'prod_control':
             self.row_values = {'name': self.row[1],
-                               'parameter': self.row[2] + self.row[3],
+                               'parameter': self.row[2] + ' ' + self.row[3],
                                'unit': self.row[4],
                                'result': self.row[5],
                                'norm': self.row[6]}
@@ -169,36 +192,15 @@ class ConclusionCreator:
         if self.conformity is None:
             raise NoneConformityError(self.row_values['result'], self.row_values['norm'])
 
-    # def check_violations_for_table(self):
-    #     """ Сделать и добавить в результат вывод о соответствии нормам для всей таблицы."""
-    #     if (isinstance(self.conformity, bool) and not self.conformity
-    #             and self.violation_main_digit is False):
-    #         self.violation_main_digit = True
-    #
-    #     elif isinstance(self.conformity, tuple):
-    #         if not self.conformity[0]:
-    #             self.violation_main_digit = True
-    #         if not self.conformity[1]:
-    #             self.violation_digit_with_dev = True
-
-    # def write_violations_for_table(self):
-    #     """ Записать в словарь с таблицей вывод о наличии нарушений норм. """
-    #     self.result_table['violations_of_norms'] = (self.violation_main_digit,
-    #                                                 self.violation_digit_with_dev)
-
     def append_conclusions(self):
         """ Добавить выводы о соответствии показателей нормам в таблицу. """
         for row in self.table[1:]:
             self.row = row
             if not self.check_valid_row():
                 continue
-
             self.determine_params()
             self.make_conformity()
-            # self.check_violations_for_table()
             self.append_row()
-
-        # self.write_violations_for_table()
 
 
 def append_conclusions(indicators: list[list]) -> dict | None:

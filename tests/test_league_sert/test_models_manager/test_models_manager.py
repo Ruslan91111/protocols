@@ -3,6 +3,7 @@ import pytest
 from league_sert.models.models import MainProtocol, ProdControl, ManufProd, Air
 from league_sert.models.models_creator import create_common_violations, create_all_objects
 
+
 data_proc_viol = {'indicators': [{'violations_of_norms': (True, True)},
                                  {'violations_of_norms': (False, True)},
                                  {'violations_of_norms': (False, False)}]}
@@ -32,7 +33,7 @@ def test_create_all_objects(main_collector):
     assert len(objects[(1, 'manuf_prod')]) == 7
     assert isinstance(objects[(10, 'air')], list)
     assert isinstance(objects[(10, 'air')][0], Air)
-    assert len(objects[(10, 'air')]) == 1
+    assert len(objects[(10, 'air')]) == 2
     assert isinstance(objects[(13, 'PROD_CONTROL')], list)
     assert isinstance(objects[(13, 'PROD_CONTROL')][0], ProdControl)
-    assert len(objects[(13, 'PROD_CONTROL')]) == 3
+    assert len(objects[(13, 'PROD_CONTROL')]) == 6

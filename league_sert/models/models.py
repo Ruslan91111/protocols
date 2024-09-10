@@ -55,7 +55,7 @@ class ProdControl(Base):
     norm = Column(String)
     conformity_main = Column(Boolean)
     conformity_deviation = Column(Boolean)
-    parameter = Column(String)
+    sampling_site = Column(String)
     unit = Column(String)
 
     # Связь с основными данными.
@@ -124,6 +124,7 @@ class Air(Base):
 
     # Индикаторы
     name_indic = Column(String)
+    sampling_site = Column(String)
     result = Column(String)
     norm = Column(String)
     conformity_main = Column(Boolean)

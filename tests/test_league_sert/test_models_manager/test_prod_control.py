@@ -18,6 +18,8 @@ def test_data():
                             'уровни шума и общей вибрации соответствуют требованиям',
         'name_indic': 'Отдел«Овощи/фрукты», рабочее место работника торгового зала(Па)',
         'parameter': 'Относительная влажность воздухаОтносительная влажность воздуха',
+        'name': 'Температура воздуха 0,1м',
+        'sampling_site': 'Отдел«Овощи/фрукты», рабочее место работника торгового зала(Па)',
         'unit': '%',
         'result': '41,1±5,8',
         'norm': '15-75',
@@ -34,6 +36,7 @@ def test_create_prod_control(test_data):
     assert object_of_model.act == test_data['act']
     assert object_of_model.conclusion == test_data['inner_conclusion']
     assert object_of_model.conclusion_compl == True
-    assert object_of_model.name_indic == test_data['name_indic']
+    assert object_of_model.name_indic == test_data['name']
+    assert object_of_model.sampling_site == test_data['name_indic']
     assert object_of_model.conformity_main == test_data['conformity_main']
     assert object_of_model.conformity_deviation == test_data['conformity_deviation']

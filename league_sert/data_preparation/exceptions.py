@@ -41,3 +41,11 @@ class TypeOfTableError(MyException):
         self.message = (f'Для таблицы, начинающейся с {text_from_first_two_cells} '
                         f'не найдено подходящего типа таблицы. ')
         super().__init__(self.message)
+
+
+class AddressNotFoundError(MyException):
+    """Исключение, возникающее, когда не получилось
+    вычленить и сформировать адрес магазина."""
+    def __init__(self, text):
+        self.message = f'Не найден адрес {text}'
+        super().__init__(self.message)

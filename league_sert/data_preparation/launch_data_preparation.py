@@ -21,7 +21,9 @@ def extract_and_prepare_data(word_file: str):
     """Запуск кода модуля."""
     data_collector = MainCollector(word_file)
     data_collector.collect_all_data()
-    data_collector.data_from_tables = add_conclusions_for_all_tables(data_collector.data_from_tables)
+    data_collector.data_from_tables = add_conclusions_for_all_tables(
+        data_collector.data_from_tables
+    )
     data_collector.data_from_tables = refine_and_merge_tables(data_collector.data_from_tables)
     data_collector.merge_prod_control()
     return data_collector

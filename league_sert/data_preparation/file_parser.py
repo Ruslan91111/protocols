@@ -262,6 +262,7 @@ class MainCollector:
         self.get_prod_control_data()
 
     def merge_prod_control(self):
+        """ Объединить воедино данные по производственному контролю. """
         for key, value in self.data_from_tables.items():
             if key[1] == 'PROD_CONTROL':
                 updated = {**self.prod_control_data, 'indicators': [value]}

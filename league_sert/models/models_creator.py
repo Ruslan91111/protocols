@@ -34,6 +34,7 @@ from pathlib import Path
 from typing import Dict, Tuple, Union, List
 from datetime import datetime, date
 
+from league_sert.data_preparation.exceptions import AddressNotFoundError
 from league_sert.data_preparation.file_parser import MainCollector
 from league_sert.exceptions import TypeIndicatorsError
 from league_sert.models.exceptions import AttrNotFoundError
@@ -77,7 +78,7 @@ def split_code_and_address(text: str) -> tuple[str, int]:
             address = match.group(4).strip(', ()')
             code = int(match.group(3))
         return address, code
-    raise Exception(f'Не найден адрес {text}')
+    raise AddressNotFoundError(text)
 
 
 def create_date(date_: str) -> date:
@@ -110,6 +111,12 @@ def create_date(date_: str) -> date:
 
     date_ = datetime.strptime(date_, '%d.%m.%Y')
     return date_.date()
+
+
+def remove_digits_from_name(text: str):
+    """ Убрать _ и числа из названий показателей."""
+    pattern = r'_\d+$'
+    return re.sub(pattern, '', text)
 
 
 def validate_attribute(class_name, value, attr_name):
@@ -145,12 +152,12 @@ def create_prod_control(**kwargs):
         address=kwargs['place_of_measurement'],
         conclusion=kwargs['inner_conclusion'],
         conclusion_compl=True if kwargs['inner_conclusion'] else False,
-        name_indic=kwargs['name_indic'],
+        name_indic=kwargs['name'],
         result=kwargs['result'],
         norm=kwargs['norm'],
         conformity_main=kwargs['conformity_main'],
         conformity_deviation=kwargs.get('conformity_deviation', True),
-        parameter=kwargs['parameter'],
+        sampling_site=remove_digits_from_name(kwargs['sampling_site']),
         unit=kwargs['unit'])
 
 
@@ -191,11 +198,12 @@ def create_air(**kwargs):
 
     return Air(
         sample_code=kwargs['Шифр пробы'],
-        name_indic=kwargs['name_indic'],
+        name_indic=kwargs['name'],
         result=kwargs['result'],
         norm=kwargs['norm'],
         conformity_main=kwargs['conformity_main'],
         conformity_deviation=kwargs.get('conformity_deviation', True),
+        sampling_site=remove_digits_from_name(kwargs['sampling_site']),
         norm_doc=kwargs['norm_doc'])
 
 

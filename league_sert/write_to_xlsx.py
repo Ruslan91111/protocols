@@ -1,22 +1,27 @@
+"""
+Модуль содержит SQL запрос и функцию, которая записывает данные,
+полученные по запросу в XLSX файл.
+"""
 from sqlalchemy import text
+import pandas as pd
 
 from database.db_config import protocols_engine
 
-import pandas as pd
 
-query_all = """
+QUERY_ALL = """
 -- Продукция изготовителя
 SELECT 
     mt.id AS id_в_бд, 
     mt.number AS номер_основного_протокола, 
-    mt.store_address AS Место_отбора_проб, 
+    mt.date AS дата_основного_протокола, 
+    mt.store_address AS Адрес_магазина, 
     mt.store_code AS Код_магазина, 
     mt.sampling_date AS дата_отбора_проб,
-    
     'Продукция_производителя' AS Тип_исследования,
     mp.name_indic AS Наименование_показателя,
     mp.result AS Результат,
     mp.norm AS Норма,
+    
     CASE 
         WHEN mp.conformity_main = 1 THEN 'соответствует' 
         WHEN mp.conformity_main = 0 THEN 'не соответствует' 
@@ -30,7 +35,7 @@ SELECT
     END AS Соответствие_нормам_показатель_с_отклонением,
     mp.norm_doc AS Нормативные_документы,
     
-    NULL AS Параметр,    
+    NULL AS Место_отбора_пробы,    
     NULL AS Единица_измерения,    
     NULL AS номер_протокола_производственного_контроля,    
     NULL AS Дата_протокола_производственного_контроля,    
@@ -47,13 +52,16 @@ SELECT
 FROM main_prot mt
 JOIN manuf_prod mp ON mt.id = mp.main_prot_id
 
+
+
 UNION ALL
 
 -- Производство магазина
 SELECT
     mt.id AS id_в_бд, 
     mt.number AS номер_основного_протокола, 
-    mt.store_address AS Место_отбора_проб, 
+    mt.date AS дата_основного_протокола, 
+    mt.store_address AS Адрес_магазина, 
     mt.store_code AS Код_магазина, 
     mt.sampling_date AS дата_отбора_проб,
     
@@ -75,7 +83,7 @@ SELECT
     END AS Соответствие_нормам_показатель_с_отклонением,
     sp.norm_doc AS Нормативные_документы,
     
-    NULL AS Параметр,    
+    NULL AS Место_отбора_пробы,    
     NULL AS Единица_измерения,    
     NULL AS номер_протокола_производственного_контроля,    
     NULL AS Дата_протокола_производственного_контроля,    
@@ -98,7 +106,8 @@ UNION ALL
 SELECT
     mt.id AS id_в_бд, 
     mt.number AS номер_основного_протокола, 
-    mt.store_address AS Место_отбора_проб, 
+    mt.date AS дата_основного_протокола, 
+    mt.store_address AS Адрес_магазина, 
     mt.store_code AS Код_магазина, 
     mt.sampling_date AS дата_отбора_проб,
     
@@ -119,7 +128,7 @@ SELECT
     END AS Соответствие_нормам_показатель_с_отклонением,
     air.norm_doc AS Нормативные_документы,
     
-    NULL AS Параметр,    
+    air.sampling_site AS Место_отбора_пробы,    
     NULL AS Единица_измерения,    
     NULL AS номер_протокола_производственного_контроля,    
     NULL AS Дата_протокола_производственного_контроля,    
@@ -142,7 +151,8 @@ UNION ALL
 SELECT
     mt.id AS id_в_бд, 
     mt.number AS номер_основного_протокола, 
-    mt.store_address AS Место_отбора_проб, 
+    mt.date AS дата_основного_протокола, 
+    mt.store_address AS Адрес_магазина, 
     mt.store_code AS Код_магазина, 
     mt.sampling_date AS дата_отбора_проб,
     
@@ -164,8 +174,7 @@ SELECT
     END AS Соответствие_нормам_показатель_с_отклонением,
     
     water.norm_doc AS Нормативные_документы,
-    
-    NULL AS Параметр,    
+    water.test_object AS Место_отбора_пробы,    
     NULL AS Единица_измерения,    
     NULL AS номер_протокола_производственного_контроля,    
     NULL AS Дата_протокола_производственного_контроля,    
@@ -189,7 +198,8 @@ UNION ALL
 SELECT
     mt.id AS id_в_бд, 
     mt.number AS номер_основного_протокола, 
-    mt.store_address AS Место_отбора_проб, 
+    mt.date AS дата_основного_протокола, 
+    mt.store_address AS Адрес_магазина, 
     mt.store_code AS Код_магазина, 
     mt.sampling_date AS дата_отбора_проб,
     
@@ -211,7 +221,7 @@ SELECT
     END AS Соответствие_нормам_показатель_с_отклонением,    
     washings.norm_doc AS Нормативные_документы,
     
-    NULL AS Параметр,    
+    NULL AS Место_отбора_пробы,        
     NULL AS Единица_измерения,    
     NULL AS номер_протокола_производственного_контроля,    
     NULL AS Дата_протокола_производственного_контроля,    
@@ -234,7 +244,8 @@ UNION ALL
 SELECT
     mt.id AS id_в_бд, 
     mt.number AS номер_основного_протокола, 
-    mt.store_address AS Место_отбора_проб, 
+    mt.date AS дата_основного_протокола, 
+    mt.store_address AS Адрес_магазина, 
     mt.store_code AS Код_магазина, 
     mt.sampling_date AS дата_отбора_проб,
     
@@ -256,7 +267,7 @@ SELECT
     
     NULL AS Нормативные_документы,
    
-    prod_control.parameter AS Параметр,    
+    prod_control.sampling_site AS Место_отбора_пробы,    
     prod_control.unit AS Единица_измерения,    
     prod_control.number AS номер_протокола_производственного_контроля,    
     prod_control.date AS Дата_протокола_производственного_контроля,    
@@ -297,7 +308,7 @@ def write_db_data_to_xlsx(sql_query: str, output_xlsx: str) -> None:
         df.to_excel(output_xlsx, index=False)
 
 
-xlsx_path = 'probe.xlsx'
+XLSX_PATH = 'probe.xlsx'
 
 if __name__ == '__main__':
-    write_db_data_to_xlsx(query_all, xlsx_path)
+    write_db_data_to_xlsx(QUERY_ALL, XLSX_PATH)
