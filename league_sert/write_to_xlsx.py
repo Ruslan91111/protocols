@@ -55,7 +55,6 @@ JOIN manuf_prod mp ON mt.id = mp.main_prot_id
 
 
 UNION ALL
-
 -- Производство магазина
 SELECT
     mt.id AS id_в_бд, 
@@ -101,7 +100,6 @@ FROM main_prot mt
 JOIN store_prod sp ON mt.id = sp.main_prot_id
 
 UNION ALL
-
 -- Воздух
 SELECT
     mt.id AS id_в_бд, 
@@ -146,7 +144,6 @@ FROM main_prot mt
 JOIN air ON mt.id = air.main_prot_id
 
 UNION ALL
-
 -- Вода
 SELECT
     mt.id AS id_в_бд, 
@@ -193,7 +190,6 @@ FROM main_prot mt
 JOIN water ON mt.id = water.main_prot_id
 
 UNION ALL
-
 -- Смывы
 SELECT
     mt.id AS id_в_бд, 
@@ -239,7 +235,6 @@ FROM main_prot mt
 JOIN washings ON mt.id = washings.main_prot_id
     
 UNION ALL
-
 -- Производственный контроль
 SELECT
     mt.id AS id_в_бд, 

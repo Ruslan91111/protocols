@@ -249,6 +249,7 @@ def create_objects_same_cls(table_data: dict, type_table):
 
     result = []
     method = methods.get(type_table, None)
+    print('!'*50, table_data)
     indicators = table_data['indicators']
     del table_data['indicators']
     for row in indicators:

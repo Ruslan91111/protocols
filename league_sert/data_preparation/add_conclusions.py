@@ -66,9 +66,10 @@ class ConclusionCreator:
                 re.search(r"Результат", first_row[3])):
             return 'indicators_air'
 
-        if (re.search(r"Место измерений", first_row[1]) and
-                re.search(r"Измеряемый параметр", first_row[2]) and
-                re.search(r"Единицы", first_row[4])):
+        if ((re.search(r"Место измерений", first_row[0]) or
+             re.search(r"Место измерений", first_row[1]) and
+             re.search(r"Измеряемый параметр", first_row[2]) and
+             re.search(r"Единицы", first_row[4]))):
             return 'prod_control'
 
         if (re.search(r"(Объект смыва)", first_row[1]) and
@@ -136,7 +137,7 @@ class ConclusionCreator:
             # Подставляем цифру в ключ
             for i in range(50):
                 # Если ключ с цифрой тоже есть
-                if self.result_table.get(self.row_values['name'] + str(i), False):
+                if self.result_table.get(self.row_values['name'] + "_" + str(i), False):
                     continue
                 # Если ключа с цифрой нет, то сохраняем
                 self.result_table[self.row_values['name'] + "_" + str(i)] = self.value
@@ -165,11 +166,18 @@ class ConclusionCreator:
                                'norm_doc': self.row[4]}
 
         elif self.type_of_table == 'prod_control':
-            self.row_values = {'name': self.row[1],
-                               'parameter': self.row[2] + ' ' + self.row[3],
-                               'unit': self.row[4],
-                               'result': self.row[5],
-                               'norm': self.row[6]}
+            if len(self.row) <= 6:
+                self.row_values = {'name': self.row[0],
+                                   'parameter': self.row[1] + ' ' + self.row[2],
+                                   'unit': self.row[3],
+                                   'result': self.row[4],
+                                   'norm': self.row[5]}
+            else:
+                self.row_values = {'name': self.row[1],
+                                   'parameter': self.row[2] + ' ' + self.row[3],
+                                   'unit': self.row[4],
+                                   'result': self.row[5],
+                                   'norm': self.row[6]}
 
         elif self.type_of_table == 'indicators_air':
             self.row_values = {'name': self.row[1],
@@ -194,11 +202,15 @@ class ConclusionCreator:
 
     def append_conclusions(self):
         """ Добавить выводы о соответствии показателей нормам в таблицу. """
-        for row in self.table[1:]:
+        for numb, row in enumerate(self.table[1:]):
             self.row = row
             if not self.check_valid_row():
                 continue
             self.determine_params()
+            pattern = r'Примечание.\s*Результаты'
+            if re.search(pattern, self.row_values['name']):
+                del (self.table[numb])
+                continue
             self.make_conformity()
             self.append_row()
 

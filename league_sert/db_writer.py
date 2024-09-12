@@ -43,7 +43,13 @@ def write_objects_to_db(objects: ObjectsForDB, session_maker):
             print(e)
 
 
-def process_and_write_files_to_db(dir_path):
+def write_file_to_db(file):
+    data_from_file = extract_and_prepare_data(file)
+    objects_for_db = create_all_objects(data_from_file)
+    write_objects_to_db(objects_for_db, prot_session_maker)
+
+
+def write_files_to_db_from_dir(dir_path):
     """ Обработать и записать в БД все файлы,
     находящиеся в передаваемой директории """
     for i in os.listdir(dir_path):
@@ -54,8 +60,17 @@ def process_and_write_files_to_db(dir_path):
         write_objects_to_db(objects_for_db, prot_session_maker)
 
 
-if __name__ == '__main__':
-    process_and_write_files_to_db(
-        r'C:\Users\RIMinullin\Documents\протоколы'
+examp_path1= (r'C:\Users\RIMinullin\Documents\протоколы'
         r'\почти полное от обыденникова\ППК для оцифровки'
         r'\Оригиналы_наилучшее возможное качество\word_files')
+
+
+examp_path2= (r'C:\Users\RIMinullin\Desktop\2024\word_files')
+
+# examp_path3 = r'C:\Users\RIMinullin\Desktop\2024\word_files\40537 25.08.2023.docx'
+# examp_path3 = r'C:\Users\RIMinullin\PycharmProjects\protocols\tests\test_league_sert\test_data_preparation\47109 23.05.2024.docx'
+
+if __name__ == '__main__':
+    write_files_to_db_from_dir(examp_path1)
+    write_files_to_db_from_dir(examp_path2)
+    # write_file_to_db(examp_path3)

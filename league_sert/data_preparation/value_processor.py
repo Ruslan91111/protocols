@@ -39,7 +39,7 @@ class ConvertValueTypes(Enum):
     MULTIPLICATION: str = r'\d\s?[•■*xх]\s?\d'  # 1 ■ 101², 1 • 10², 5,5х102
     NO_MORE: str = r'до \d+,?\d*'  # до 1,5
     WITHIN: str = r'\d+\,?\d*\s?-\s?\d+\,?\d*\b'  # 2,0 - 4,2
-    LESS: str = r'менее \d+,?\d*'  # менее 0,10
+    LESS: str = r'менее \d+,?\d*|<\d+,?\d*'  # менее 0,10 <0,001
     NOT_FOUND: str = r'не обнаружено|не обнаружены'  # не обнаружено в 25,0 г
     DIGIT: str = r'\d+,?\d*'  # 9,0
     NONE: str = r'^\-$|^$'  # '-'

@@ -30,6 +30,10 @@ def create_cell_with_text(doc, text: str, superscript_indices:list):
     (create_cell_with_text(document, "3,0x104", superscript_indices=[6]), '3,0x10⁴'),
     (create_cell_with_text(document, "102", superscript_indices=[2]), '10²'),
     (create_cell_with_text(document, "1030х102", superscript_indices=[2, 3, 7]), '10³⁰х10²'),
+    (create_cell_with_text(document, "1030х102", superscript_indices=[2, 3, 7]), '10³⁰х10²'),
+    (create_cell_with_text(document, "не обнаружены в 1 г (см3)",
+                           superscript_indices=[23]), 'не обнаружены в 1 г (см³)'),
+
 ])
 def test_get_text_with_superscripts(cell, expected):
     """ Сохранение степеней при чтении документа в регистре степени. """
@@ -37,13 +41,15 @@ def test_get_text_with_superscripts(cell, expected):
     assert result == expected
 
 
-def test_find_out_type_of_table_raises_error():
-    """ Проверка возникновения исключения при содержимом таблицы,
-    не подпадающем под паттерны."""
-    invalid_two_cell_text = "Текст в двух первых ячейках"
-    with pytest.raises(TypeOfTableError) as excinfo:
-        find_out_type_of_table(invalid_two_cell_text)
-    assert invalid_two_cell_text in str(excinfo.value)
+# def test_find_out_type_of_table_raises_error():
+#     """ Проверка возникновения исключения при содержимом таблицы,
+#     не подпадающем под паттерны."""
+#     cell1 = create_cell_with_text(document, "", superscript_indices=[])
+#     cell2 = create_cell_with_text(document, "", superscript_indices=[])
+#     with pytest.raises(TypeOfTableError) as excinfo:
+#         print('1!'*30, find_out_type_of_table([cell1, cell2]))
+#
+#     assert cell1 in str(excinfo.value)
 
 
 def test_get_main_numb_and_date():

@@ -15,7 +15,7 @@ class MainCollectorDoubler:
             setattr(self, key, value)
 
 
-@pytest.fixture(scope='module')
+@pytest.fixture(scope='function')
 def main_collector():
     """ Создание объекта - дублера класса MainCollector. """
     return MainCollectorDoubler(data_for_main_collector)

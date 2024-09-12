@@ -46,21 +46,23 @@ from docx import Document, table
 from docx2txt import docx2txt
 
 from league_sert.data_preparation.exceptions import TypeOfTableError
+from league_sert.data_preparation.value_processor import ConvertValueTypes
 
 
 class TypesOfTable(enum.Enum):
     """ Паттерны для определения типа таблицы. """
     MAIN: str = r'Заявитель'
     SAMPLE: str = r'Шифр пробы'
-    RESULTS: str = r'(Показатели|Наименование\sпоказателя)|Место отбора пробы|Объект смыва'
+    RESULTS: str = r'(Показатели|Наименование\sпоказател[ия])|Место отбора пробы|Объект смыва'
     MEASURING: str = r'Наименование средства измерения'
-    PROD_CONTROL: str = r'№ п/п\s?Место измерений'
+    PROD_CONTROL: str = r'.?Место измерений'
+    # PROD_CONTROL: str = r'№ п/п\s?Место измерений'
 
 
 class TextPatt(enum.Enum):
     """ Паттерны для определения типа таблицы. """
     SUBSTRING_START: str = r'П\s?р\s?о\s?т\s?о\s?к\s?о\s?л\s+и\s?с\s?п\s?ы\s?т\s?а\s?н\s?и\s?й'
-    SUBSTRING_END: str = r'г.'
+    SUBSTRING_END: str = r'[^\w]+г.'
     NUMBER: str = r'№?([\d/]+\s?-Д)'
     DATE: str = r'«?(\d{2})»?(\w{3,})(\d{4})'
 
@@ -70,9 +72,8 @@ class ProdControlPatt(enum.Enum):
     производственного контроля. """
     START_SUBSTR: str = r'ПРОТОКОЛ\s?№?'
     DATE: str = r'«\s?(\d{2})\s?»?\s?(\w{3,})\s?(\d{4})'
-    NUMB_AND_DATE_OF_MEASUR = r'№ Акта и дата проведения измерений:\s*([\d\w\s\.]+)\s[гГ][,.]'
-    PLACE_OF_MEASUR = (r'Адрес проведения измерений:'
-                            r'\s*([\s\S]+)[\d\s\.]*Сведения о средствах измерения')
+    NUMB_AND_DATE_OF_MEASUR = r'№ Акта и дата проведения измерений[:;]\s*([\d\w\s,\.]+)\s[гГ][,.]'
+    PLACE_OF_MEASUR = (r'Адрес проведения измерений[:;]\s*([\s\S]+)[\d\s\.]*Сведения о средствах измерения')
     START_OF_CONCLUSION = r'ЗАКЛЮЧЕНИЕ'
     INNER_PART_OF_CONCLUSION = r'- на[\s\w\d\,\.]*\n\n'
 
@@ -93,20 +94,38 @@ def get_text_with_superscripts(cell):
                 if run.text == 'б':
                     text += f"{'⁰¹²³⁴⁵⁶⁷⁸⁹'[int(6)]}"
                 else:
-                    text += f"{'⁰¹²³⁴⁵⁶⁷⁸⁹'[int(run.text)]}"
+                    for i in run.text:
+                        if i.isdigit():
+                            text += f"{'⁰¹²³⁴⁵⁶⁷⁸⁹'[int(i)]}"
+                        else:
+                            text += i
+
             else:
                 text += run.text
     return text
 
 
-def find_out_type_of_table(first_two_cells_text: str) -> TypesOfTable | None:
+def find_out_type_of_table(first_row_cells: list) -> TypesOfTable | None:
     """ Определить тип таблицы по содержанию первой строки. """
+    text = first_row_cells[0].text + ' ' + first_row_cells[1].text
+
+    # Пытаемся определить тип таблицы, исходя из содержимого.
     for pattern in TypesOfTable:
-        if re.search(pattern.value, first_two_cells_text):
+        if re.search(pattern.value, text):
             return pattern.name
-        if re.search(r'Данная проба по исследованным ', first_two_cells_text):
+        if re.search(r'Данная проба по исследованным ', text):
             return None
-    raise TypeOfTableError(first_two_cells_text)
+    if len(first_row_cells) <= 2:
+        return None
+
+    for pattern in ConvertValueTypes:
+        match_ = re.search(pattern.value, first_row_cells[1].text)
+        match_2 = re.search(pattern.value, first_row_cells[2].text)
+
+        if match_ or match_2:
+            return TypesOfTable.RESULTS
+
+    raise TypeOfTableError(first_row_cells)
 
 
 def get_main_numb_and_date(text) -> tuple[str, str]:
@@ -169,20 +188,22 @@ class CollectorFromTable:
 
         for table_number, table_ in enumerate(self.all_tables_in_file):  # Цикл по таблицам.
             self.current_table = table_  # Текущая таблица
+            cols_count = len(table_.columns)
+            if len(table_.rows) <= 1 or cols_count <= 1:
+                continue
 
-            if len(table_.rows) > 1:  # Проверка на наличие в таблице более двух строк.
-                first_row_cells = table_.row_cells(0)
-                text_from_first_two_cells = first_row_cells[0].text + first_row_cells[1].text
-                type_of_table = find_out_type_of_table(text_from_first_two_cells)
-                self.key_of_current_table = (table_number, type_of_table)
+            first_row_cells = table_.row_cells(0)
 
-                if type_of_table in {TypesOfTable.MAIN.name,
-                                     TypesOfTable.SAMPLE.name}:
-                    self.process_two_columns_table()
+            type_of_table = find_out_type_of_table(first_row_cells)
+            self.key_of_current_table = (table_number, type_of_table)
 
-                if type_of_table in {TypesOfTable.RESULTS.name,
-                                     TypesOfTable.PROD_CONTROL.name}:
-                    self.process_more_then_two_cols()
+            if type_of_table in {TypesOfTable.MAIN.name,
+                                 TypesOfTable.SAMPLE.name}:
+                self.process_two_columns_table()
+
+            if type_of_table in {TypesOfTable.RESULTS.name,
+                                 TypesOfTable.PROD_CONTROL.name}:
+                self.process_more_then_two_cols()
 
 
 def collect_prod_control_data(text) -> dict:
@@ -191,15 +212,19 @@ def collect_prod_control_data(text) -> dict:
     try:
         substr_start = re.search(ProdControlPatt.START_SUBSTR.value, text).start()
         prod_control_text = text[substr_start:]
-        number_of_protocol = re.search(TextPatt.NUMBER.value, prod_control_text).group(1)
+        number_of_protocol = re.search(TextPatt.NUMBER.value,
+                                       prod_control_text).group(1)
 
-        match = re.search(ProdControlPatt.DATE.value, prod_control_text)
+        match = re.search(ProdControlPatt.DATE.value,
+                          prod_control_text)
         date_of_protocol = (match.group(1) + ' ' + match.group(2) + ' ' + match.group(3))
 
-        match = re.search(ProdControlPatt.NUMB_AND_DATE_OF_MEASUR.value, prod_control_text)
+        match = re.search(ProdControlPatt.NUMB_AND_DATE_OF_MEASUR.value,
+                          prod_control_text)
         date_of_measurement = match.group(1)
 
-        match = re.search(ProdControlPatt.PLACE_OF_MEASUR.value, prod_control_text)
+        match = re.search(ProdControlPatt.PLACE_OF_MEASUR.value,
+                          prod_control_text)
         place_of_measurement = match.group(1).strip()
 
         inner_conclusion = re.search(ProdControlPatt.INNER_PART_OF_CONCLUSION.value,

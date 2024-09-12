@@ -9,6 +9,7 @@ def test_extract_and_prepare_data():
     """ Тестирование основной функции модуля. Проверка, что результат всей работы по
     извлечению, преобразованию, добавлению выводов соответствует ожидаемому. """
     data_result = extract_and_prepare_data(r'47109 23.05.2024.docx')
+    print('!!!!!!!!!', data_result.data_from_tables.keys())
     assert list(data_result.data_from_tables.keys()) == [
         (0, 'MAIN'),
         (1, 'manuf_prod'),
