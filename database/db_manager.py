@@ -27,10 +27,11 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 if BASE_DIR not in sys.path:
     sys.path.insert(0, str(BASE_DIR))
 
-from database.db_config import protocols_engine, prot_session_maker
+from database.db_config_postgres import protocols_engine, prot_session_maker
 from database.base import Base
 
 from league_sert.models.models import *
+from fbu_protocols.models.models import *
 
 
 class DBManager:
@@ -90,7 +91,4 @@ class DBManager:
 if __name__ == '__main__':
     db_worker = DBManager(Base, protocols_engine)
     db_worker.drop_all_tables()
-    print(db_worker.get_all_tables())
     db_worker.create_all_tables()
-    # print(db_worker.get_all_tables())
-    # print(db_worker.get_table_contents('air'))

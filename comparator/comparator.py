@@ -23,17 +23,11 @@ bool | list[bool]. list[bool] - возвращается, когда резул�
         и list[bool] если значение результата исследования имеет погрешность
         в виде '±'. В своей работе создает и оперирует классом CompareResultAndNorms.
 
-
-enum классы:
-    - ComparisonTypes:
-        Тип сравнения в зависимости от содержания в поле норма,
-        для определения логики, используемой при сравнении.
-
 Пример использования:
     - conclusion = compare_result_and_norms(result: str, norm: str)
 
 """
-from league_sert.data_preparation.common import ComparTypes
+from league_sert.constants import ComparTypes
 from league_sert.data_preparation.exceptions import MethodOfComparisonError
 from league_sert.data_preparation.value_processor import to_process_the_value, \
     define_value_type
@@ -45,8 +39,8 @@ class Comparator:
 
     def __init__(self, result: str, norm: str):
         self.comparison_type = define_value_type(norm, ComparTypes)
-        self.result = to_process_the_value(result)  # Результат исследования
-        self.norm = to_process_the_value(norm)  # Нормы
+        self.result = to_process_the_value(result.strip('.').strip(' '))  # Результат исследования
+        self.norm = to_process_the_value(norm.strip('.').strip(' '))  # Нормы
         self.conclusion = None  # Вывод о наличии нарушений нормам.
 
     def compare_within(self):
@@ -110,7 +104,8 @@ def create_conformity_conclusion(result: str, norm: str) -> bool | list[bool]:
      Возвращает либо bool если значение результат исследования одно число,
      и list[bool] если значение результата исследования имеет погрешность
      в виде '±' """
-
+    result = result.strip('.').strip(' ')
+    norm = norm.strip('.').strip(' ')
     comparator = Comparator(result, norm)
     comparator.compare()
     return comparator.conclusion

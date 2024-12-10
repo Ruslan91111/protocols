@@ -5,7 +5,7 @@
 from sqlalchemy import text
 import pandas as pd
 
-from database.db_config import protocols_engine
+from database.db_config_sqllite import protocols_engine
 
 
 QUERY_ALL = """
@@ -23,14 +23,14 @@ SELECT
     mp.norm AS Норма,
     
     CASE 
-        WHEN mp.conformity_main = 1 THEN 'соответствует' 
-        WHEN mp.conformity_main = 0 THEN 'не соответствует' 
+        WHEN mp.conformity_main = TRUE THEN 'соответствует' 
+        WHEN mp.conformity_main = FALSE THEN 'не соответствует' 
         ELSE 'неизвестно' 
     END AS Соответствие_нормам_основной_показатель,
 
     CASE 
-        WHEN mp.conformity_deviation = 1 THEN 'соответствует' 
-        WHEN mp.conformity_deviation = 0 THEN 'не соответствует' 
+        WHEN mp.conformity_deviation = TRUE THEN 'соответствует' 
+        WHEN mp.conformity_deviation = FALSE THEN 'не соответствует' 
         ELSE 'неизвестно' 
     END AS Соответствие_нормам_показатель_с_отклонением,
     mp.norm_doc AS Нормативные_документы,
@@ -38,7 +38,7 @@ SELECT
     NULL AS Место_отбора_пробы,    
     NULL AS Единица_измерения,    
     NULL AS номер_протокола_производственного_контроля,    
-    NULL AS Дата_протокола_производственного_контроля,    
+    CAST(NULL AS date) AS Дата_протокола_производственного_контроля,    
     NULL AS Акт_производственного_контроля,    
     NULL AS Адрес_отбора_проб_производственного_контроля,    
     NULL AS Текст_заключения,    
@@ -70,14 +70,14 @@ SELECT
     sp.result AS Результат,
     sp.norm AS Норма,
     CASE 
-        WHEN sp.conformity_main = 1 THEN 'соответствует' 
-        WHEN sp.conformity_main = 0 THEN 'не соответствует' 
+        WHEN sp.conformity_main = TRUE THEN 'соответствует' 
+        WHEN sp.conformity_main = FALSE THEN 'не соответствует' 
         ELSE 'неизвестно' 
     END AS Соответствие_нормам_основной_показатель,
 
     CASE 
-        WHEN sp.conformity_deviation = 1 THEN 'соответствует' 
-        WHEN sp.conformity_deviation = 0 THEN 'не соответствует' 
+        WHEN sp.conformity_deviation = TRUE THEN 'соответствует' 
+        WHEN sp.conformity_deviation = FALSE THEN 'не соответствует' 
         ELSE 'неизвестно' 
     END AS Соответствие_нормам_показатель_с_отклонением,
     sp.norm_doc AS Нормативные_документы,
@@ -85,7 +85,7 @@ SELECT
     NULL AS Место_отбора_пробы,    
     NULL AS Единица_измерения,    
     NULL AS номер_протокола_производственного_контроля,    
-    NULL AS Дата_протокола_производственного_контроля,    
+    CAST(NULL AS date) AS Дата_протокола_производственного_контроля,    
     NULL AS Акт_производственного_контроля,    
     NULL AS Адрес_отбора_проб_производственного_контроля,    
     NULL AS Текст_заключения,    
@@ -114,14 +114,14 @@ SELECT
     air.result AS Результат,
     air.norm AS Норма,
     CASE 
-        WHEN air.conformity_main = 1 THEN 'соответствует' 
-        WHEN air.conformity_main = 0 THEN 'не соответствует' 
+        WHEN air.conformity_main = TRUE THEN 'соответствует' 
+        WHEN air.conformity_main = FALSE THEN 'не соответствует' 
         ELSE 'неизвестно' 
     END AS Соответствие_нормам_основной_показатель,
 
     CASE 
-        WHEN air.conformity_deviation = 1 THEN 'соответствует' 
-        WHEN air.conformity_deviation = 0 THEN 'не соответствует' 
+        WHEN air.conformity_deviation = TRUE THEN 'соответствует' 
+        WHEN air.conformity_deviation = FALSE THEN 'не соответствует' 
         ELSE 'неизвестно' 
     END AS Соответствие_нормам_показатель_с_отклонением,
     air.norm_doc AS Нормативные_документы,
@@ -129,7 +129,7 @@ SELECT
     air.sampling_site AS Место_отбора_пробы,    
     NULL AS Единица_измерения,    
     NULL AS номер_протокола_производственного_контроля,    
-    NULL AS Дата_протокола_производственного_контроля,    
+    CAST(NULL AS date) AS Дата_протокола_производственного_контроля,    
     NULL AS Акт_производственного_контроля,    
     NULL AS Адрес_отбора_проб_производственного_контроля,    
     NULL AS Текст_заключения,    
@@ -159,14 +159,14 @@ SELECT
     water.result AS Результат,
     water.norm AS Норма,
     CASE 
-        WHEN water.conformity_main = 1 THEN 'соответствует' 
-        WHEN water.conformity_main = 0 THEN 'не соответствует' 
+        WHEN water.conformity_main = TRUE THEN 'соответствует' 
+        WHEN water.conformity_main = FALSE THEN 'не соответствует' 
         ELSE 'неизвестно' 
     END AS Соответствие_нормам_основной_показатель,
 
     CASE 
-        WHEN water.conformity_deviation = 1 THEN 'соответствует' 
-        WHEN water.conformity_deviation = 0 THEN 'не соответствует' 
+        WHEN water.conformity_deviation = TRUE THEN 'соответствует' 
+        WHEN water.conformity_deviation = FALSE THEN 'не соответствует' 
         ELSE 'неизвестно' 
     END AS Соответствие_нормам_показатель_с_отклонением,
     
@@ -174,7 +174,7 @@ SELECT
     water.test_object AS Место_отбора_пробы,    
     NULL AS Единица_измерения,    
     NULL AS номер_протокола_производственного_контроля,    
-    NULL AS Дата_протокола_производственного_контроля,    
+    CAST(NULL AS date) AS Дата_протокола_производственного_контроля,    
     NULL AS Акт_производственного_контроля,    
     NULL AS Адрес_отбора_проб_производственного_контроля,    
     NULL AS Текст_заключения,    
@@ -205,14 +205,14 @@ SELECT
     washings.result AS Результат,
     washings.norm AS Норма,
     CASE 
-        WHEN washings.conformity_main = 1 THEN 'соответствует' 
-        WHEN washings.conformity_main = 0 THEN 'не соответствует' 
+        WHEN washings.conformity_main = TRUE THEN 'соответствует' 
+        WHEN washings.conformity_main = FALSE THEN 'не соответствует' 
         ELSE 'неизвестно' 
     END AS Соответствие_нормам_основной_показатель,
 
     CASE 
-        WHEN washings.conformity_deviation = 1 THEN 'соответствует' 
-        WHEN washings.conformity_deviation = 0 THEN 'не соответствует' 
+        WHEN washings.conformity_deviation = TRUE THEN 'соответствует' 
+        WHEN washings.conformity_deviation = FALSE THEN 'не соответствует' 
         ELSE 'неизвестно' 
     END AS Соответствие_нормам_показатель_с_отклонением,    
     washings.norm_doc AS Нормативные_документы,
@@ -220,7 +220,7 @@ SELECT
     NULL AS Место_отбора_пробы,        
     NULL AS Единица_измерения,    
     NULL AS номер_протокола_производственного_контроля,    
-    NULL AS Дата_протокола_производственного_контроля,    
+    CAST(NULL AS date) AS Дата_протокола_производственного_контроля,    
     NULL AS Акт_производственного_контроля,    
     NULL AS Адрес_отбора_проб_производственного_контроля,    
     NULL AS Текст_заключения,    
@@ -249,14 +249,14 @@ SELECT
     prod_control.result AS Результат,
     prod_control.norm AS Норма,
     CASE 
-        WHEN prod_control.conformity_main = 1 THEN 'соответствует' 
-        WHEN prod_control.conformity_main = 0 THEN 'не соответствует' 
+        WHEN prod_control.conformity_main = TRUE THEN 'соответствует' 
+        WHEN prod_control.conformity_main = FALSE THEN 'не соответствует' 
         ELSE 'неизвестно' 
     END AS Соответствие_нормам_основной_показатель,
 
     CASE 
-        WHEN prod_control.conformity_deviation = 1 THEN 'соответствует' 
-        WHEN prod_control.conformity_deviation = 0 THEN 'не соответствует' 
+        WHEN prod_control.conformity_deviation = TRUE THEN 'соответствует' 
+        WHEN prod_control.conformity_deviation = FALSE THEN 'не соответствует' 
         ELSE 'неизвестно' 
     END AS Соответствие_нормам_показатель_с_отклонением,        
     
@@ -270,8 +270,8 @@ SELECT
     prod_control.address AS Адрес_отбора_проб_производственного_контроля,    
     prod_control.conclusion AS Текст_заключения,   
     CASE 
-        WHEN prod_control.conclusion_compl = 1 THEN 'нарушения отсутствуют' 
-        WHEN prod_control.conclusion_compl = 0 THEN 'имеются нарушения' 
+        WHEN prod_control.conclusion_compl = TRUE THEN 'нарушения отсутствуют' 
+        WHEN prod_control.conclusion_compl = FALSE THEN 'имеются нарушения' 
     ELSE 'неизвестно' 
     END AS Наличие_нарушений_в_заключении, 
      

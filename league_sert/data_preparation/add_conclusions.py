@@ -24,8 +24,72 @@
 """
 import re
 
-from league_sert.data_preparation.comparator import create_conformity_conclusion
+from comparator.comparator import create_conformity_conclusion
+from league_sert.constants import WordsPatterns as words, WRONG_PARTS_IN_ROW, TypesOfTable
 from league_sert.data_preparation.exceptions import TypeOfIndicatorTableError, NoneConformityError
+from league_sert.data_preparation.file_parser import check_wrong_parts_in_row
+
+NAME = words.NAME.value
+INDICATORS = words.INDICATORS.value
+RESULT = words.RESULT.value
+REQUIREMENTS = words.REQUIREMENTS.value
+RESULT_OF_MEASUREMENT = words.RESULT_OF_MEASUREMENT.value
+SAMPLING_SITE = words.SAMPLING_SITE.value
+PLACE_OF_MEASUREMENT = words.PLACE_OF_MEASUREMENT.value
+PARAMETER = words.PARAMETER.value
+UNITS = words.UNITS.value
+OBJECT_WASHINGS = words.OBJECT_WASHINGS.value
+
+
+def find_out_results_table_type(table) -> str:
+    """ Определить тип таблицы. От типа таблицы зависит как будут
+    формироваться значения для последующего сравнения и записи в итог."""
+
+    if len(table) <= 1:
+        return None
+
+    from league_sert.data_preparation.process_tables import rm_first_col_if_blank
+
+    table = rm_first_col_if_blank(table)
+
+    first_row = table[0]
+    str_first_row = " ".join(first_row)
+
+    if first_row == ['', 'Результаты исследований', '', '', '', '']:
+        first_row = table[1]
+
+    if not check_wrong_parts_in_row(" ".join(first_row), WRONG_PARTS_IN_ROW):
+        first_row = table[2]
+
+    if (re.search(f"({NAME}|{INDICATORS})", first_row[0], re.IGNORECASE) and
+            re.search(RESULT, first_row[1], re.IGNORECASE) and
+            re.search(REQUIREMENTS, first_row[2], re.IGNORECASE)):
+        return 'indicators'
+
+    if (re.search(f"({NAME}|{INDICATORS})", first_row[1], re.IGNORECASE) and
+            re.search(f"({RESULT}|{RESULT_OF_MEASUREMENT})", first_row[2], re.IGNORECASE) and
+            re.search(REQUIREMENTS, first_row[3], re.IGNORECASE)):
+        return 'indicators_type2'
+
+    if ((re.search(SAMPLING_SITE, first_row[1], re.IGNORECASE) and
+         re.search(NAME, first_row[2], re.IGNORECASE) and
+         re.search(RESULT, first_row[3], re.IGNORECASE)) or
+            (re.search(SAMPLING_SITE, first_row[1], re.IGNORECASE) and
+             re.search(SAMPLING_SITE, first_row[2], re.IGNORECASE) and
+             re.search(NAME, first_row[3], re.IGNORECASE) and
+             re.search(RESULT, first_row[4], re.IGNORECASE))):
+        return 'indicators_air'
+
+    if re.search(TypesOfTable.PROD_CONTROL.value, str_first_row):
+        return 'prod_control'
+
+    if (re.search(OBJECT_WASHINGS, first_row[1], re.IGNORECASE) and
+            re.search(RESULT, first_row[3], re.IGNORECASE) and
+            re.search(REQUIREMENTS, first_row[4], re.IGNORECASE)):
+        return 'washings'
+
+    # Если тип таблицы с показателями не определен поднять исключение.
+    raise TypeOfIndicatorTableError()
 
 
 class ConclusionCreator:
@@ -40,45 +104,14 @@ class ConclusionCreator:
         self.table = table  # Таблица показателей исследования
         self.row = None  # Текущая строка.
         self.value = None  # Значения для показателя для словаря
-        self.type_of_table = self.determine_table_type()
+        self.type_of_table = find_out_results_table_type(self.table)
         self.row_values = {}  # Набор параметров для записи в результат.
         self.result_table = {}  # Выходные данные.
         self.conformity = None
 
-    def determine_table_type(self) -> str:
+    def find_out_results_table_type(self) -> str:
         """ Определить тип таблицы. От типа таблицы зависит как будут
         формироваться значения для последующего сравнения и записи в итог."""
-
-        first_row = self.table[0]
-
-        if (re.search(r"(Наименование|Показатели)", first_row[0]) and
-                re.search(r"(Результат|Результат измерений)", first_row[1]) and
-                re.search(r"Требования", first_row[2])):
-            return 'indicators'
-
-        if (re.search(r"(Наименование|Показатели)", first_row[1]) and
-                re.search(r"(Результат|Результат измерений)", first_row[2]) and
-                re.search(r"Требования", first_row[3])):
-            return 'indicators_type2'
-
-        if (re.search(r"Место отбора пробы", first_row[1]) and
-                re.search(r"Наименование", first_row[2]) and
-                re.search(r"Результат", first_row[3])):
-            return 'indicators_air'
-
-        if ((re.search(r"Место измерений", first_row[0]) or
-             re.search(r"Место измерений", first_row[1]) and
-             re.search(r"Измеряемый параметр", first_row[2]) and
-             re.search(r"Единицы", first_row[4]))):
-            return 'prod_control'
-
-        if (re.search(r"(Объект смыва)", first_row[1]) and
-                re.search(r"(Результат|Результат измерений)", first_row[3]) and
-                re.search(r"Требования", first_row[4])):
-            return 'washings'
-
-        # Если тип таблицы с показателями не определен поднять исключение.
-        raise TypeOfIndicatorTableError()
 
     def _update_conformity(self):
         """ Добавить в словарь вывод о соответствии нормам. """
@@ -180,22 +213,30 @@ class ConclusionCreator:
                                    'norm': self.row[6]}
 
         elif self.type_of_table == 'indicators_air':
-            self.row_values = {'name': self.row[1],
-                               'name_indic': self.row[2],
-                               'result': self.row[3], 'norm': self.row[4],
-                               'norm_doc': self.row[5]}
+
+            if len(self.row) <= 6:
+                self.row_values = {'name': self.row[1],
+                                   'name_indic': self.row[2],
+                                   'result': self.row[3], 'norm': self.row[4],
+                                   'norm_doc': self.row[5]}
+
+            if len(self.row) >= 7:
+                self.row_values = {'name': self.row[1],
+                                   'name_indic': self.row[2] + ' ' + self.row[3],
+                                   'result': self.row[4], 'norm': self.row[5],
+                                   'norm_doc': self.row[6]}
 
         elif self.type_of_table == 'washings':
             self.row_values = {'washings_object': self.row[1],
                                'name': self.row[2],
                                'result': self.row[3],
                                'norm': self.row[4],
-                               'norm_doc_of_method': self.row[4]}
+                               'norm_doc_of_method': self.row[5]}
 
     def make_conformity(self):
         """ Сделать выводы о соответствии показателей и норм. """
-        self.conformity: bool | tuple[bool] = create_conformity_conclusion(
-            self.row_values['result'], self.row_values['norm'])
+        self.conformity: bool | tuple[bool] = create_conformity_conclusion(self.row_values['result'],
+                                                                           self.row_values['norm'])
 
         if self.conformity is None:
             raise NoneConformityError(self.row_values['result'], self.row_values['norm'])
@@ -204,13 +245,19 @@ class ConclusionCreator:
         """ Добавить выводы о соответствии показателей нормам в таблицу. """
         for numb, row in enumerate(self.table[1:]):
             self.row = row
+            union_row = set(row)
+            if 'Результат' in union_row or 'Место отбора пробы' in union_row or 'Требования НД' in union_row:
+                continue
+
             if not self.check_valid_row():
                 continue
+
             self.determine_params()
             pattern = r'Примечание.\s*Результаты'
             if re.search(pattern, self.row_values['name']):
                 del (self.table[numb])
                 continue
+
             self.make_conformity()
             self.append_row()
 

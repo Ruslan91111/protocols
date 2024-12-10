@@ -21,7 +21,7 @@ class MainProtocol(Base):
     id = Column(Integer, primary_key=True, autoincrement=True, nullable=False, unique=True)
 
     # Обычные поля
-    number = Column(String, nullable=True, unique=True)
+    number = Column(String, nullable=False, unique=True)
     date = Column(Date, nullable=True)
     store_address = Column(String, nullable=True)  # Место отбора проб.
     store_code = Column(Integer, nullable=True)
@@ -47,7 +47,7 @@ class ProdControl(Base):
     act = Column(String)  # Акт и дата проведения измерений.
     address = Column(String)  # Адрес проведения измерений.
     conclusion = Column(String)  # Заключение
-    conclusion_compl = Column(String)  # Установлены ли нарушения в заключении
+    conclusion_compl = Column(Boolean)  # Установлены ли нарушения в заключении
 
     # Индикаторы
     name_indic = Column(String)
@@ -97,7 +97,7 @@ class StoreProd(Base):
     # Обычные поля
     sample_code = Column(String)  # Шифр пробы.
     prod_name = Column(String)  # Наименования продукции.
-    prod_date = Column(Date)  # Дата производства продукции
+    prod_date = Column(String)  # Дата производства продукции
     manuf = Column(String)  # Производитель.
 
     # Индикаторы

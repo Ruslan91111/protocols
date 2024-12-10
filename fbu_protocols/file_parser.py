@@ -7,12 +7,16 @@ from enum import Enum
 from docx import Document
 import docx2txt
 
-from fbu_comparison_results_and_norms import compare_result_and_norms
-
+from fbu_comparison_results_and_norms import compare_result_and_norms, CompareResultAndNorms
 
 # Множество для хранения заголовков таблицы, для пропуска при высчитывании соответствия нормам.
-KEYS_IN_INDICATORS_FOR_PASS = {'Токсичные элементы, мг/кг:',
-                               'Пестициды, мг/кг:', }
+KEYS_IN_INDICATORS_FOR_PASS = {'Гигиенические требования безопасности',
+                               'Жирно-кислотный состав',
+                               'Микробиологические нормативы безопасности (патогенные)',
+                               'Микробиологические нормативы безопасности',
+                               'Органолептические показатели',
+                               'Физико-химические показатели',
+                               }
 
 
 # Ключи для поиска на первой странице протокола.
@@ -124,10 +128,12 @@ class WordFileParser:
         а также сделать общий вывод для протокола имеются ли в нем несоответствия нормам.
         """
 
-        violations = False   # Переменная есть ли нарушения в показателях.
+        violations_of_main_indicator = False   # Переменная есть ли нарушения в показателях.
+        violations_of_indicator_with_deviation = False   # Переменная есть ли нарушения в показателях.
 
         # Перебираем словари в 'показателях'.
         for number, indicator_dict in enumerate(self.data['indicators']):
+
             # key - наименование показателя, value - tuple: (результат, норма для показателя)
             for key, value in indicator_dict.items():
 
@@ -136,18 +142,31 @@ class WordFileParser:
                     new_value = value + ('-',)
 
                 else:
-                    # Получаем bool соответствует ли результат норме.
+                    # Получаем вывод по сравнению результат нормам.
                     complies_with_standards = compare_result_and_norms(value[0], value[1])
-                    if not complies_with_standards:
-                        violations = True
+
+                    # Если результат сравнения содержит два показателя:
+                    # вывод по сравнению основного показателя и показателя с погрешностью.
+                    if isinstance(complies_with_standards, list):
+                        if not complies_with_standards[0]:
+                            violations_of_main_indicator = True
+                        if not complies_with_standards[1]:
+                            violations_of_indicator_with_deviation = True
+
+                    # Если результат сравнения состоит из одного bool.
+                    else:
+                        if not complies_with_standards:
+                            violations_of_main_indicator = True
+                    # К показателям результат и норм добавляем вывод о сравнении.
                     new_value = value + (complies_with_standards,)
 
-                # Добавляем вывод о соответствии в словарь
+                # Записываем в значение показателя
                 self.data['indicators'][number][key] = new_value
 
         # Добавляем в словарь с данными по всему протоколу ключ
         # с bool есть ли в протоколе нарушение норм.
-        self.data['violation_of_norms'] = 'Не соответствуют' if violations else 'Соответствуют'
+        self.data['violation_of_norms'] = 'Не соответствуют' if violations_of_main_indicator else 'Соответствуют'
+        self.data['violation_of_norms_with_deviation'] = 'Не соответствуют' if violations_of_indicator_with_deviation else 'Соответствуют'
 
     def get_all_required_data_from_word_file(self):
         """ Основной метод - направленный на изъятие данных из Word файла."""

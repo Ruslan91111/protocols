@@ -9,10 +9,11 @@
 """
 import sys
 import os
+import time
 
 from pathlib import Path
 
-from database.db_config import prot_session_maker
+from database.db_config_postgres import prot_session_maker
 from league_sert.data_preparation.launch_data_preparation import extract_and_prepare_data
 from league_sert.models.models_creator import ObjectsForDB, create_all_objects
 
@@ -22,21 +23,34 @@ if BASE_DIR not in sys.path:
     sys.path.insert(0, str(BASE_DIR))
 
 
+VIEWED_FILE = r'viewed.txt'
+
+
 def write_objects_to_db(objects: ObjectsForDB, session_maker):
-    """ Записать объекты, сформированные из word файла в БД.
+    """ Записать объекты, сформированные из одного word файла в БД.
+
+    Сначала в БД записывается основной объект, затем он передается
+    в дополнительные объекты для оформления внешних связей.
+
     :param: objects: объекты моделей, подлежащих записи в БД."""
+
     with session_maker() as session:
         try:
+            # Перебираем объекты собранные и подготовленные для записи в БД.
             for key, value in objects.items():
-                # Добавление основного объекта в сессию
+
+                # Добавление основного объекта (с основным номером и датой протокола) в сессию.
                 if key[1] == 'MAIN':
                     main_object = value
                     session.add(value)
+
                 # Добавление остальных объектов(привязанных через внешний ключ к основному).
                 else:
                     for obj in value:
+                        # Добавляем ссылку на основной объект.
                         obj.main_prot = main_object
                         session.add(obj)
+
             session.commit()
 
         except Exception as e:
@@ -44,33 +58,66 @@ def write_objects_to_db(objects: ObjectsForDB, session_maker):
 
 
 def write_file_to_db(file):
+    """ Записать один word файл в БД."""
+    # Собрать данные из word файла.
     data_from_file = extract_and_prepare_data(file)
+    # Создать из собранных данных объекты для записи в БД.
     objects_for_db = create_all_objects(data_from_file)
+    # Записать объекты в БД.
     write_objects_to_db(objects_for_db, prot_session_maker)
+
+
+def read_viewed_from_file(file: str = VIEWED_FILE):
+    """Прочитать номера просмотренных документов из файла."""
+
+    if not os.path.isfile(file):
+        with open(file, 'w', encoding='utf-8') as file:
+            file.write('')
+            return set()
+
+    with open(file, 'r', encoding='utf-8') as file:
+        viewed_files = set(file.read().split(','))
+        return viewed_files
 
 
 def write_files_to_db_from_dir(dir_path):
     """ Обработать и записать в БД все файлы,
     находящиеся в передаваемой директории """
-    for i in os.listdir(dir_path):
-        if '$' in i:
+
+    recorded = []  # Файлы, записанные в БД.
+    not_recorded = []  # Файлы, незаписанные в БД.
+
+    viewed =read_viewed_from_file(VIEWED_FILE)
+    # try:
+    for file in os.listdir(dir_path):
+        if '$' in file or file in viewed:
             continue
-        data_from_file = extract_and_prepare_data(dir_path + '\\' + i)
-        objects_for_db = create_all_objects(data_from_file)
-        write_objects_to_db(objects_for_db, prot_session_maker)
+
+        try:
+            print(file)
+            data_from_file = extract_and_prepare_data(dir_path + '\\' + file)
+            objects_for_db = create_all_objects(data_from_file)
+            write_objects_to_db(objects_for_db, prot_session_maker)
+
+            viewed.add(file)
+            recorded.append(file)
+
+        except Exception as e:
+            not_recorded.append(file)
+
+    with open(VIEWED_FILE, 'w', encoding='utf-8') as file:
+        file.write(",".join(viewed))
 
 
-examp_path1= (r'C:\Users\RIMinullin\Documents\протоколы'
-        r'\почти полное от обыденникова\ППК для оцифровки'
-        r'\Оригиналы_наилучшее возможное качество\word_files')
+    print(f'pas {len(recorded)}')
+    print(f'unpas {len(not_recorded)}')
 
+examp_path2= (r'C:\Users\RIMinullin\Desktop\Сентябрь-октябрь 2024\word_files')
+examp_path1= (r'C:\Users\RIMinullin\Desktop\Сканы Оригиналы август-сентябрь 2024\word_files')
 
-examp_path2= (r'C:\Users\RIMinullin\Desktop\2024\word_files')
-
-# examp_path3 = r'C:\Users\RIMinullin\Desktop\2024\word_files\40537 25.08.2023.docx'
-# examp_path3 = r'C:\Users\RIMinullin\PycharmProjects\protocols\tests\test_league_sert\test_data_preparation\47109 23.05.2024.docx'
 
 if __name__ == '__main__':
-    write_files_to_db_from_dir(examp_path1)
+    start = time.time()
     write_files_to_db_from_dir(examp_path2)
-    # write_file_to_db(examp_path3)
+    write_files_to_db_from_dir(examp_path1)
+    print(time.time() - start)

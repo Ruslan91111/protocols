@@ -25,26 +25,11 @@ enum классы:
     processed_value = to_process_the_value(value)
 
 """
-from enum import Enum
 import re
 from typing import Any
 
-from league_sert.data_preparation.common import ComparTypes, DIGITS_IN_DEGREE
+from league_sert.constants import ComparTypes, DIGITS_IN_DEGREE, ConvertValueTypes
 from league_sert.data_preparation.exceptions import DetermineValueTypeError
-
-
-class ConvertValueTypes(Enum):
-    """ Тип преобразования значения. """
-    PLUS: str = r'\d\s?[+±]\s?\d'  # 16,34±0,15;  +
-    MULTIPLICATION: str = r'\d\s?[•■*xх]\s?\d'  # 1 ■ 101², 1 • 10², 5,5х102
-    NO_MORE: str = r'до \d+,?\d*'  # до 1,5
-    WITHIN: str = r'\d+\,?\d*\s?-\s?\d+\,?\d*\b'  # 2,0 - 4,2
-    LESS: str = r'менее \d+,?\d*|<\d+,?\d*'  # менее 0,10 <0,001
-    NOT_FOUND: str = r'не обнаружено|не обнаружены'  # не обнаружено в 25,0 г
-    DIGIT: str = r'\d+,?\d*'  # 9,0
-    NONE: str = r'^\-$|^$'  # '-'
-    NO_CHANGE: str = r'отсутствие изменений|отсутствие|не изменен'
-    NOT_ALLOWED: str = r'не допускаются'
 
 
 class ValueProcessor:
@@ -55,7 +40,7 @@ class ValueProcessor:
         """ Конструктор - принимает само значение и тип значения. """
         self.value = value  # Само значение
         self.type_of_processing = type_of_processing  # Тип значения
-        self.types = ConvertValueTypes
+        self.types = ConvertValueTypes  # Набор типов для выбора подходящего.
         self.new_value: Any  # Итоговое значение
         self.process_the_value()  # Значение в результате обработки
 
@@ -71,7 +56,7 @@ class ValueProcessor:
     def process_multiplication(self):
         """ Обработать значение для показателей с двумя перемножающимися числами,
         в том числе, со степенью. Вычисляет значение с учетом степени.  """
-        pattern = r'(\d+[,\.]?\d*)\s?([•■*xх]+\s?)(\d+)([⁰¹²³⁴⁵⁶⁷⁸⁹]?)'
+        pattern = r'(\d+[,\.]?\d*)\s?([•■*xхХX]+\s?)(\d+)([⁰¹²³⁴⁵⁶⁷⁸⁹]?)'
         match_substr = re.search(pattern, self.value)
         first_digit = match_substr.group(1).replace(',', '.')
         second_digit = match_substr.group(3).replace(',', '.')
@@ -124,14 +109,26 @@ class ValueProcessor:
 def to_process_the_value(value: str):
     """ Обработать значение и вернуть в преобразованном виде.
     Функция для использования класса ValueProcessor"""
+
+    # Исправить неточности, допущенные при конвертировании файла
+    value = value.strip('.').strip(' ').strip('\t')
+    value = re.sub(r'l', '1', value)
+    value = re.sub('хЮ', 'х10', value)
+    value = re.sub(r'\d*б|б.\d', '6', value)
+
+    # Определить тип необходимых преобразования значения.
     value_type = define_value_type(value, ConvertValueTypes)
+
+    # Преобразовать значение и вернуть.
     new_value = ValueProcessor(value, value_type).new_value
     return new_value
 
 
 def define_value_type(value: str, types_of_value: [ComparTypes | ConvertValueTypes]) -> str:
-    """ Принимает значение и класс enum, перебирает паттерны из класса enum,
-    находит тип, подходящий под значение и возвращает его. """
+    """ Определить либо тип преобразования значения, либо тип сравнения.
+    Принимает значение и класс enum с типами,
+    перебирает паттерны из класса enum, находит тип,
+    подходящий под значение и возвращает его. """
     for type_value in types_of_value:
         if re.search(type_value.value, value.lower()):
             return type_value.name
