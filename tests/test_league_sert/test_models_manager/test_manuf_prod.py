@@ -1,3 +1,6 @@
+"""
+Тестирование создание объектов модели ManufProd.
+"""
 import pytest
 
 from league_sert.models.models import ManufProd

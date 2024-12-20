@@ -37,8 +37,8 @@ class TypeOfTableError(MyException):
     """Исключение, возникающее, когда по содержимому первых двух ячеек
     не представляется возможным определить тип таблицы: RESULT, MAIN, SAMPLE."""
 
-    def __init__(self, text_from_first_two_cells):
-        self.message = (f'Для таблицы, начинающейся с {text_from_first_two_cells} '
+    def __init__(self, cells):
+        self.message = (f'Для таблицы, начинающейся с {cells[0].text, cells[1].text} '
                         f'не найдено подходящего типа таблицы. ')
         super().__init__(self.message)
 

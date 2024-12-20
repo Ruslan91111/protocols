@@ -7,6 +7,7 @@
     обработать файлы и записать их в БД.
 
 """
+import re
 import sys
 import os
 import time
@@ -36,21 +37,20 @@ def write_objects_to_db(objects: ObjectsForDB, session_maker):
 
     with session_maker() as session:
         try:
-            # Перебираем объекты собранные и подготовленные для записи в БД.
             for key, value in objects.items():
-
                 # Добавление основного объекта (с основным номером и датой протокола) в сессию.
                 if key[1] == 'MAIN':
                     main_object = value
                     session.add(value)
 
-                # Добавление остальных объектов(привязанных через внешний ключ к основному).
-                else:
+            # Перебираем объекты собранные и подготовленные для записи в БД.
+            for key, value in objects.items():
+                # Добавление остальных объектов в сессию.
+                if key[1] != 'MAIN':
                     for obj in value:
                         # Добавляем ссылку на основной объект.
                         obj.main_prot = main_object
                         session.add(obj)
-
             session.commit()
 
         except Exception as e:
@@ -84,40 +84,44 @@ def write_files_to_db_from_dir(dir_path):
     """ Обработать и записать в БД все файлы,
     находящиеся в передаваемой директории """
 
-    recorded = []  # Файлы, записанные в БД.
     not_recorded = []  # Файлы, незаписанные в БД.
 
-    viewed =read_viewed_from_file(VIEWED_FILE)
-    # try:
+    recorded =read_viewed_from_file(VIEWED_FILE)
     for file in os.listdir(dir_path):
-        if '$' in file or file in viewed:
-            continue
+        # if '$' in file or file in recorded:
+        #     continue
 
-        try:
-            print(file)
-            data_from_file = extract_and_prepare_data(dir_path + '\\' + file)
-            objects_for_db = create_all_objects(data_from_file)
-            write_objects_to_db(objects_for_db, prot_session_maker)
+        # try:
+        print(file)
+        # Получить и подготовить данные из word файла
+        data_from_file = extract_and_prepare_data(dir_path + '\\' + file)
+        # Создать объекты для записи в БД.
+        objects_for_db = create_all_objects(data_from_file)
+        # Записать объекты в БД.
+        write_objects_to_db(objects_for_db, prot_session_maker)
+        # Добавить в записанный
+        recorded.add(file)
 
-            viewed.add(file)
-            recorded.append(file)
-
-        except Exception as e:
-            not_recorded.append(file)
+        # except Exception as e:
+        #     not_recorded.append(file)
+        #     with open(VIEWED_FILE, 'w', encoding='utf-8') as file:
+        #         file.write(",".join(recorded))
 
     with open(VIEWED_FILE, 'w', encoding='utf-8') as file:
-        file.write(",".join(viewed))
-
+        file.write(",".join(recorded))
 
     print(f'pas {len(recorded)}')
     print(f'unpas {len(not_recorded)}')
 
-examp_path2= (r'C:\Users\RIMinullin\Desktop\Сентябрь-октябрь 2024\word_files')
-examp_path1= (r'C:\Users\RIMinullin\Desktop\Сканы Оригиналы август-сентябрь 2024\word_files')
+examp_path1 = (r'C:\Users\RIMinullin\Desktop\Сканы Оригиналы август-сентябрь 2024\word_files')
+examp_path2 = (r'C:\Users\RIMinullin\Desktop\Сентябрь-октябрь 2024\word_files')
 
 
 if __name__ == '__main__':
     start = time.time()
-    write_files_to_db_from_dir(examp_path2)
     write_files_to_db_from_dir(examp_path1)
+    write_files_to_db_from_dir(examp_path2)
+    # write_file_to_db(r'C:\Users\RIMinullin\PycharmProjects\protocols\tests\test_league_sert\test_files\test_word_file_1.docx')
+    # write_file_to_db(r'C:\Users\RIMinullin\PycharmProjects\protocols\tests\test_league_sert\test_files\test_word_file_2.docx')
+    # write_file_to_db(r'C:\Users\RIMinullin\PycharmProjects\protocols\tests\test_league_sert\test_files\test_word_file_3.docx')
     print(time.time() - start)

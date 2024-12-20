@@ -165,6 +165,7 @@ class Washings(Base):
 
     # Индикаторы
     name_indic = Column(String)
+    sampling_site = Column(String)
     result = Column(String)
     norm = Column(String)
     conformity_main = Column(Boolean)

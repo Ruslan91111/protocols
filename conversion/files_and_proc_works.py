@@ -118,11 +118,17 @@ def get_path_from_user(message_for_user: str) -> str:
 
 def fetch_files_for_conversion(path_to_dir_pdf: str, path_to_dir_word: str) -> set:
     """Вернуть множеством файлы, которые нужно конвертировать."""
-    pdf_files = {i for i in os.listdir(path_to_dir_pdf) if i[-4:] == '.pdf'}
+    pdf_files = {i for i in os.listdir(path_to_dir_pdf) if i[-4:] == '.pdf' and
+                 i[-9:-4] != 'stamp' and i[-8:-4] != 'temp'}
+
     pdf_files = {i[:-4] for i in pdf_files}
+
     word_files = {i for i in os.listdir(path_to_dir_word) if i[-5:] == '.docx'}
+
     word_files = {i[:-5] for i in word_files}
+
     set_files_required_to_convert = pdf_files.difference(word_files)
+
     return set_files_required_to_convert
 
 

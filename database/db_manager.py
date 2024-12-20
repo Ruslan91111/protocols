@@ -36,11 +36,11 @@ from fbu_protocols.models.models import *
 
 class DBManager:
     """ Класс для общих манипуляций с БД и таблицами в ней. """
-    def __init__(self, base, engine):
+    def __init__(self, base, engine, session):
         self.Base = base
         self.metadata = MetaData()
         self.engine = engine
-        self.session = prot_session_maker
+        self.session = session
 
     def create_all_tables(self):
         """Создать все таблицы, определенные в модели Base."""
@@ -89,6 +89,6 @@ class DBManager:
 
 
 if __name__ == '__main__':
-    db_worker = DBManager(Base, protocols_engine)
+    db_worker = DBManager(Base, protocols_engine, prot_session_maker)
     db_worker.drop_all_tables()
     db_worker.create_all_tables()

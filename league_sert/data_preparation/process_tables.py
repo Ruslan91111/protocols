@@ -126,16 +126,17 @@ def rm_blank_rows_in_tab(tab_rows: list):
     Получить таблицу в виде списка списков, где вложенные списки
     представляют собой строки таблицы. Перебрать через цикл строки
     и удалить то строки, которые состоят из одного повторяющегося значения."""
+    new_tab = []
 
     for row in tab_rows:
         row_elems = set(row)  # Элементы строки
-        # Если строка состоит из одного, повторяющегося значения, то ее удалить из таблицы.
-        if (len(row_elems) <= 2 and '' in row_elems) or (len(row_elems) == 1):
-            tab_rows.remove(row)
-        if row_elems == {'', 'НД', 'испытаний', 'показателя'}:
-            tab_rows.remove(row)
-
-    return tab_rows
+        # Если строка состоит из одного, повторяющегося значения, то не добавлять в новую таблицу.
+        if ((len(row_elems) <= 2 and '' in row_elems) or
+                (len(row_elems) == 1) or
+                (row_elems == {'', 'НД', 'испытаний', 'показателя'})):
+            continue
+        new_tab.append(row)
+    return new_tab
 
 
 def join_split_rows(tab_rows: list):

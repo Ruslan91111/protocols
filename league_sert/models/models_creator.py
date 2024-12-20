@@ -46,6 +46,40 @@ if BASE_DIR not in sys.path:
 from league_sert.models.models import (MainProtocol, ManufProd, Air, Water,
                                        ProdControl, Washings, StoreProd)
 
+FIX_KEYS_MAIN_PROT = {'Место отбора проб':
+                          (r"м\s*[ео]\s*[се]\s*[тiг1]\s*[оoае0]\s*?\s*"
+                           r"[оoае0]\s*[тг1]\s*б\s*о\s*р\s*а\s*?\s*"
+                           r"п\s*р\s*о\s*б"),
+
+                      'Дата и время отбора проб':
+                          (r'а\s?[тчгш]\s?\s?а?\s'
+                           r'([изпн]|тт)*\s*в\s?р\s?е\s?м\s?я\s'
+                           r'о\s?[тг]\s?б\s?о\s?р\s?а\s'
+                           r'п\s?р\s?о\s?б\s?|Дша и время отбора проб'),
+                      'Заявитель': r'Заяви?\s*[тг]ель',
+                      }
+
+FIX_KEYS_MANUF_PROD = {'Производитель (фирма, предприятие, организация)':
+                           (r'\(фирма,|р\s?о\s?и\s?[зэч]\s?[вн]\s?о\s?[дл]\s?и\s?[тг]\s?[еcс]*'
+                            r'\s?[ля]\s?[ь1][\s>]*\(ф\s*и\s*р\s*м\s*а\s*[,.]*'
+                            r'\s*п\s*р\s*е\s*д\s*п\s*р\s*и\s*я\s*т\s*и\s*е\s*'),
+
+                       'Шифр пробы': r'.*Шифр пробы',
+
+                       'Наименование продукции':
+                           ('а[ип]\.*м[есc][нп]ова[нп]и[есc]|'
+                            '(?:\s*[Н1]*[\)]?\s*и\s*м[\s\w>]*|'
+                            '[кЕ]шм[се][нп]ова[нп]ие\s*)\s*'
+
+                            '[пи]\s*р\s*о\s*д\s*у\s*к\s*ц\s*и\s*и\s*'),
+
+                       'Дата производства продукции':
+                           (r'[дл]\s*а\s*[тз]\s*а\s*п\s*р\s*о\s*и\s*з\s*'
+                            r'в\s*о\s*д\s*с\s*т\s*в\s*а\s*п\s*р\s*о\s*д\s*у\s*к\s*ц\s*и\s*и'),
+                       }
+
+FIX_KEYS_AIR_WATER = {'Шифр пробы': r'.*Шифр [п]робы', }
+
 
 def create_common_violations(table_data: dict) -> List[bool]:
     """Вернуть вывод о наличии нарушений результатов
@@ -70,6 +104,7 @@ def split_code_and_address(sampling_place: str, apllicant_info: str) -> tuple[st
     """ Разбить место отбора проб на адрес и код магазина. """
     pattern = r'(.+)\(№?\s*>?(\d+)|(\d{5})(.*)'
     match = re.search(pattern, sampling_place)
+
     if match:
         if match.group(1):
             address = match.group(1).strip(', ()')
@@ -133,109 +168,37 @@ def validate_attribute(class_name, value, attr_name):
         raise AttrNotFoundError(class_name, attr_name)
 
 
-def fix_keys_main_prot(data: dict):
-    """ Исправить орфографические ошибки в ключах
-    основных данных протокола, возникшие при конвертации документов."""
+def fix_keys(data: dict, keys: dict) -> dict:
+    """
+    Исправить орфографические ошибки в ключах
+    данных, подготовленных для создания моделей.
 
-    keys_for_replace = {
-        'Место отбора проб':
-            (r"м\s*[ео]\s*[се]\s*[тiг1]\s*[оoае0]\s*?\s*"
-             r"[оoае0]\s*[тг1]\s*б\s*о\s*р\s*а\s*?\s*"
-             r"п\s*р\s*о\s*б"),
-
-        'Дата и время отбора проб':
-            (r'а\s?[тчгш]\s?\s?а?\s'
-             r'([изпн]|тт)*\s*в\s?р\s?е\s?м\s?я\s'
-             r'о\s?[тг]\s?б\s?о\s?р\s?а\s'
-             r'п\s?р\s?о\s?б\s?|Дша и время отбора проб')}
+    :param data: данные, собранные из word файла и подготовленные для создания моделей
+    :param keys: словарь, где ключи - правильное написание ключей, а значения паттерны
+                для нахождения неправильного написания в ключах.
+    :return: словарь с исправленными ключами.
+    """
 
     new_data = {**data}
-    for key in data.keys():
-        for k, v in keys_for_replace.items():
-            match_ = re.search(v, key, re.IGNORECASE)
+    for data_key in data.keys():
+        for right_key, patt_wrong_key in keys.items():
+            match_ = re.search(patt_wrong_key, data_key, re.IGNORECASE)
             if match_:
-                new_data[k] = data[key]
+                new_data[right_key] = data[data_key]
+                # del new_data[data_key]
 
     return new_data
 
 
-def fix_keys_manuf_prod(data_from_file: dict):
-    """ Исправить орфографические ошибки в ключах
-    модели производство изготовителя и магазина,
-    возникшие при конвертации документов."""
-
-    correct_keys = {
-
-        'Производитель (фирма, предприятие, организация)':
-            (r'\(фирма,|р\s?о\s?и\s?[зэч]\s?[вн]\s?о\s?[дл]\s?и\s?[тг]\s?[еcс]*'
-             r'\s?[ля]\s?[ь1][\s>]*\(ф\s*и\s*р\s*м\s*а\s*[,.]*'
-             r'\s*п\s*р\s*е\s*д\s*п\s*р\s*и\s*я\s*т\s*и\s*е\s*'),
-
-        'Шифр пробы': r'.*Шифр пробы',
-
-        'Наименование продукции':
-            ('а[ип]\.*м[есc][нп]ова[нп]и[есc]|'
-             '(?:\s*[Н1]*[\)]?\s*и\s*м[\s\w>]*|'
-             '[кЕ]шм[се][нп]ова[нп]ие\s*)\s*'
-
-             '[пи]\s*р\s*о\s*д\s*у\s*к\s*ц\s*и\s*и\s*'),
-
-        'Дата производства продукции':
-            (r'[дл]\s*а\s*[тз]\s*а\s*п\s*р\s*о\s*и\s*з\s*'
-             r'в\s*о\s*д\s*с\s*т\s*в\s*а\s*п\s*р\s*о\s*д\s*у\s*к\s*ц\s*и\s*и'),
-
-    }
-    # Обработанные данные для возврата.
-    result_data = {**data_from_file}
-
-    # Цикл по данным собранным из файла.
-    for key in data_from_file.keys():
-
-        for correct_key, correct_key_pattern in correct_keys.items():
-            match_ = re.search(correct_key_pattern, key, re.IGNORECASE)
-            if match_:
-                result_data[correct_key] = data_from_file[key]
-
-    return result_data
-
-
-def process_air(data_from_file: dict):
-    """ Исправить орфографические ошибки в ключах
-    модели воздух,
-    возникшие при конвертации документов."""
-
-    correct_keys = {
-
-        'Шифр пробы': r'.*Шифр [п]робы',
-    }
-    # Обработанные данные для возврата.
-    result_data = {**data_from_file}
-
-    # Цикл по данным собранным из файла.
-    for key in data_from_file.keys():
-
-        for correct_key, correct_key_pattern in correct_keys.items():
-            match_ = re.search(correct_key_pattern, key, re.IGNORECASE)
-            if match_:
-                result_data[correct_key] = data_from_file[key]
-
-    return result_data
-
-
-
-
-
-
 def create_main_protocol(main_number, main_date, table_data: dict):
     """ Создать объект модели MainProtocol.  """
-    table_data = fix_keys_main_prot(table_data)
+    table_data = fix_keys(table_data, FIX_KEYS_MAIN_PROT)
 
     for key in table_data.keys():
         match_ = re.search('Заяви?тель', key)
         if match_:
-            address, code = split_code_and_address(
-                table_data['Место отбора проб'],
-                table_data[key])
+            address, code = split_code_and_address(table_data['Место отбора проб'],
+                                                   table_data[key])
             break
 
     main_date = create_date(main_date)
@@ -273,7 +236,7 @@ def create_prod_control(**kwargs):
 
 def create_manuf_prod(**kwargs):
     """ Создать объект модели ManufProd.  """
-    kwargs = fix_keys_manuf_prod(kwargs)
+    kwargs = fix_keys(kwargs, FIX_KEYS_MANUF_PROD)
 
     return ManufProd(
         sample_code=kwargs['Шифр пробы'],
@@ -291,7 +254,7 @@ def create_manuf_prod(**kwargs):
 
 def create_store_prod(**kwargs):
     """ Создать объект модели ManufProd.  """
-    kwargs = fix_keys_manuf_prod(kwargs)
+    kwargs = fix_keys(kwargs, FIX_KEYS_MANUF_PROD)
 
     return StoreProd(
         sample_code=kwargs['Шифр пробы'],
@@ -309,21 +272,21 @@ def create_store_prod(**kwargs):
 def create_air(**kwargs):
     """ Создать объект модели Air. """
     validate_attribute(Air, kwargs['name_indic'], 'name_indic')
-    kwargs = process_air(kwargs)
+    kwargs = fix_keys(kwargs, FIX_KEYS_AIR_WATER)
     return Air(
         sample_code=kwargs['Шифр пробы'],
-        name_indic=kwargs['name_indic'],
+        name_indic=kwargs['Объект исследования'],
         result=kwargs['result'],
         norm=kwargs['norm'],
         conformity_main=kwargs['conformity_main'],
         conformity_deviation=kwargs.get('conformity_deviation', True),
-        # sampling_site=remove_digits_from_name(kwargs['sampling_site']),
+        sampling_site=kwargs['name_indic'],
         norm_doc=kwargs['norm'])
 
 
 def create_water(**kwargs):
     """ Создать объект модели Water.  """
-    kwargs = process_air(kwargs)
+    kwargs = fix_keys(kwargs, FIX_KEYS_AIR_WATER)
 
     return Water(
         test_object=kwargs['Объект исследований'],
@@ -339,6 +302,7 @@ def create_water(**kwargs):
 def create_washings(**kwargs):
     """ Создать объект модели washings.  """
     return Washings(
+        sampling_site=remove_digits_from_name(kwargs['sampling_site']),
         name_indic=kwargs['name_indic'],
         result=kwargs['result'],
         norm=kwargs['norm'],
@@ -378,6 +342,7 @@ def create_all_objects(main_collector: MainCollector) -> ObjectsForDB:
      файла, набора объектов всех моделей. """
 
     objects_of_models = {}
+
     for key, value in main_collector.data_from_tables.items():
         if key[1] == 'MAIN':
             objects_of_models[key] = create_main_protocol(main_collector.main_number,
@@ -385,4 +350,8 @@ def create_all_objects(main_collector: MainCollector) -> ObjectsForDB:
                                                           value)
         else:
             objects_of_models[key] = create_objects_same_cls(value, key[1])
+
+    # Результатом будет словарь, в котором ключом будет tuple, где 1 значение порядковый номер,
+    # 2 значение это тип объектов - класс, значением в словаре будет список объектов
+    # определенной модели.
     return objects_of_models

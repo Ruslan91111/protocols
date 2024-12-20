@@ -145,7 +145,9 @@ class ConclusionCreator:
         """ Добавить в результат строку по производственному контролю. """
         self.value = {'result': self.row_values['result'],
                       'norm': self.row_values['norm'],
-                      'norm_doc_of_method': self.row_values['norm_doc_of_method']}
+                      'norm_doc_of_method': self.row_values['norm_doc_of_method'],
+                      'sampling_site': self.row_values['washings_object']
+                      }
 
     def append_row(self):
         """ Добавить строку в результат. Логика обработки и структура строки определяется
@@ -235,8 +237,8 @@ class ConclusionCreator:
 
     def make_conformity(self):
         """ Сделать выводы о соответствии показателей и норм. """
-        self.conformity: bool | tuple[bool] = create_conformity_conclusion(self.row_values['result'],
-                                                                           self.row_values['norm'])
+        self.conformity: bool | tuple[bool] = create_conformity_conclusion(
+            self.row_values['result'], self.row_values['norm'])
 
         if self.conformity is None:
             raise NoneConformityError(self.row_values['result'], self.row_values['norm'])
@@ -246,7 +248,9 @@ class ConclusionCreator:
         for numb, row in enumerate(self.table[1:]):
             self.row = row
             union_row = set(row)
-            if 'Результат' in union_row or 'Место отбора пробы' in union_row or 'Требования НД' in union_row:
+            if ('Результат' in union_row or
+                    'Место отбора пробы' in union_row or
+                    'Требования НД' in union_row):
                 continue
 
             if not self.check_valid_row():

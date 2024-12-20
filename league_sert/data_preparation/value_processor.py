@@ -114,7 +114,7 @@ def to_process_the_value(value: str):
     value = value.strip('.').strip(' ').strip('\t')
     value = re.sub(r'l', '1', value)
     value = re.sub('хЮ', 'х10', value)
-    value = re.sub(r'\d*б|б.\d', '6', value)
+    value = re.sub(r'\d+б|б.\d+', '6', value)
 
     # Определить тип необходимых преобразования значения.
     value_type = define_value_type(value, ConvertValueTypes)

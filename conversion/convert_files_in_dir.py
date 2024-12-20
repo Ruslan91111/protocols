@@ -45,6 +45,8 @@
 """
 import os
 import re
+import time
+
 from docx import Document
 from docx2txt import docx2txt
 
@@ -81,6 +83,7 @@ class FileConverter:
 
     def input_pdf_origin(self):
         """ Ввести путь к оригинальному ПДФ файлу. """
+        time.sleep(0.5)
         input_filename(self.file_pdf_original)
         try:
             wait_scr(FRScreens.CONVERT_TO_WORD_INNER_BUTTON.value)
@@ -105,6 +108,7 @@ class FileConverter:
         uncheck_open_doc()
         self.input_path_to_word()
         is_file_in_dir(self.dir_word_files, self.file + '.docx')
+
         handle_fr_warning()
         click_scr(FRScreens.BUTTON_CANCEL.value)
 
@@ -192,7 +196,7 @@ class WordChecker:
             print(e)
 
 
-def check_word_file(file_path: str) -> tuple | False:
+def check_word_file(file_path: str) -> tuple | bool:
     """ Проверить ворд файл на наличие номеров и дат протоколов. """
     word_checker = WordChecker(file_path)
     word_checker.get_main_numb_and_date()
@@ -227,5 +231,13 @@ def convert_all_pdf_in_dir_to_word(dir_with_pdf_files: str) -> None:
 
     # Перебираем файлы в перечне файлов, нуждающихся в конвертации.
     for file in files_for_convert:
+
         convert_a_file(file, dir_with_pdf_files, dir_for_word_files)
         print(file)
+
+if __name__ == '__main__':
+    dir_path = r'C:\Users\RIMinullin\Desktop\не конвертирует\pdf'
+    convert_all_pdf_in_dir_to_word(dir_path)
+    from conversion.rename_files import rename_the_files_in_dir
+
+    rename_the_files_in_dir(dir_path)

@@ -24,12 +24,12 @@ def test_create_air(test_data):
     result_object = create_air(**test_data)
     assert isinstance(result_object, Air)
     assert result_object.sample_code == test_data['Шифр пробы']
-    assert result_object.name_indic == test_data['Объект исследования']
+    assert result_object.name_indic == test_data['name']
     assert result_object.result == test_data['result']
     assert result_object.norm == test_data['norm']
     assert result_object.conformity_main == test_data['conformity_main']
     assert result_object.sampling_site == test_data['sampling_site']
-    assert result_object.conformity_deviation is True
+    assert result_object.conformity_deviation == True
     assert isinstance(result_object.conformity_main, bool)
 
 

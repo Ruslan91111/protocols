@@ -123,10 +123,14 @@ def get_main_numb_and_date(text: str, file: str) -> tuple:
     """ Найти номер и дату протокола,
     реализует работу класса NumbDateGetter. """
     getter = NumbDateGetter(text, file)
+
     if getter.get_from_solid_text():
         return getter.main_numb, getter.main_date
+
     if getter.get_from_frames():
         return getter.main_numb, getter.main_date
+
     if getter.get_date():
         return getter.main_numb, getter.main_date
+
     raise Exception('Не найдены номер и дата протокола.')

@@ -5,13 +5,14 @@ import pytest
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 
-from main_file import ProtocolToDBWorker
+from main_file import ProtocolMainWorker
 from models import Base
 from work_with_tables_in_db import StoreManager, ProtocolManager
 
 
 @pytest.fixture(autouse=True)
 def change_test_dir(request):
+    """ Сменить рабочую директорию. """
     os.chdir(request.fspath.dirname)
 
 
@@ -51,8 +52,9 @@ def protocol_manager(test_session):
 @pytest.fixture
 def protocol_to_db_worker(test_session):
     """ Создать экземпляр StoreManager с тестовой сессией. """
-    manager = ProtocolToDBWorker(test_session)
-    return manager
+    protocol_to_db_worker = ProtocolMainWorker(r'./word_files')
+    protocol_to_db_worker.protocol_manager.session = test_session
+    return protocol_to_db_worker
 
 
 @pytest.fixture

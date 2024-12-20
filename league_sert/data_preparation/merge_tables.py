@@ -24,6 +24,10 @@
         и определяя тип таблиц.
 
 """
+import re
+
+from league_sert.models.models_creator import fix_keys
+
 Tables = dict[tuple[int, str]: dict[str]]
 
 
@@ -60,6 +64,16 @@ def remove_results_table(tables: Tables) -> Tables:
     return tables
 
 
+FIX_KEYS_MANUF_PROD = {'Группа продукции':
+                           (r'г\s*р\s*у\s*п\s*п\s*а\s*п\s*р\s*о\s*д\s*у\s*к\s*ц\s*и\s*и\s*'),
+                       'Объект исследования':
+                           (r'о\s*б\s*ъ\s*е\s*к\s*т\s*и\s*с\s*с\s*л\s*е\s*д\s*о\s*в\s*а\s*н\s*и\s*й\s*')}
+
+FIX_KEYS_OBJECT = {'air': r'В\s*о\s*з\s*д\s*у\s*х',
+                   'washings': r'С\s*м\s*ы\s*в\s*ы',
+                   'water': r'В\s*о\s*д\s*а',}
+
+
 def determine_names_of_tables(tables: Tables) -> Tables:
     """ Определить тип таблицы исходя из ее содержимого.
     Под типом понимается к какой модели она относится.
@@ -68,9 +82,12 @@ def determine_names_of_tables(tables: Tables) -> Tables:
     result = {}
 
     for key, value in tables.items():
+
         if key[1] in {'MAIN', 'PROD_CONTROL'}:
             result[key] = value
             continue
+
+        value = fix_keys(value, FIX_KEYS_MANUF_PROD)
 
         manuf_prod = value.get('Группа продукции', False)
         if manuf_prod == 'Продукция производителя':
@@ -86,14 +103,13 @@ def determine_names_of_tables(tables: Tables) -> Tables:
             object_of_test = value.get('Объект исследований', False)
 
         if object_of_test:
-            object_of_test = object_of_test.replace(',', '',).replace(' ', '')
-            if 'Воздух' in object_of_test:
-                result[(key[0], 'air')] = value
-                continue
-            if 'Вода' in object_of_test:
-                result[(key[0], 'water')] = value
-            if 'Смывы' in object_of_test:
-                result[(key[0], 'washings')] = value
+
+            object_of_test = object_of_test.replace(',', '', ).replace(' ', '')
+
+            for k, v in FIX_KEYS_OBJECT.items():
+                if re.search(v, object_of_test, re.IGNORECASE):
+                    result[(key[0], k)] = value
+                    break
 
     return result
 

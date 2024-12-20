@@ -1,6 +1,6 @@
 """ Тестирование модуля comparator. """
 import pytest
-from league_sert.data_preparation.comparator import Comparator
+from comparator.comparator import Comparator
 
 
 @pytest.mark.parametrize('result, norm, expecting_conclusion',

@@ -118,6 +118,7 @@ def launch_desktop_app(process: str, icon_from_panel: str,
 
 def wait_fr_app_loading() -> None:
     """ Дождаться полной загрузки FineReader. """
+    time.sleep(5)
     wait_scr_to_disappear(FRScreens.DESKTOP_APP_LOADING.value)
 
 
@@ -133,7 +134,7 @@ def input_filename(file_path):
     pyautogui.hotkey('ctrl', 'a')
     pyautogui.press('backspace')
     pyperclip.copy(file_path)
-    time.sleep(0.2)
+    time.sleep(0.5)
     pyautogui.hotkey('ctrl', 'v')
     time.sleep(0.5)
     pyautogui.press('enter')
@@ -209,8 +210,10 @@ def uncheck_open_doc() -> None:
 
 def click_convert_blue_button() -> None:
     """ Нажать синюю кнопку конвертировать в Word. """
-    click_scr(FRScreens.CONVERT_TO_WORD_INNER_BUTTON.value)
-
+    try:
+        click_scr(FRScreens.CONVERT_TO_WORD_INNER_BUTTON.value)
+    except Exception as e:
+        pyautogui.press('enter')
 
 def handle_fr_warning():
     """ Проверить наличия предупреждения после конвертации документа. """

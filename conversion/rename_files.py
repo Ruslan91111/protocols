@@ -10,6 +10,7 @@
                             конвертированными word файлами)
 """
 import os
+import random
 import re
 
 from docx import Document
@@ -35,10 +36,36 @@ def check_name_word_file(file_name: str) -> bool:
 def get_main_date(file_path: str) -> str | bool:
     """ Вернуть дату протокола. """
     word_checker = WordChecker(file_path)
-    word_checker.get_main_numb_and_date()
+    try:
+        word_checker.get_main_numb_and_date()
+    except Exception:
+        re.search(r'гарантийное письмо', word_checker.text, re.IGNORECASE)
+        return 'guarantee'
     if word_checker.main_date:
         return word_checker.main_date
     return False
+
+
+def search_code(text: str) -> str:
+    """ Ищем код магазина в переданном тексте. """
+
+    # На случай наличия в адресе наименования воинской части.
+    army = re.search('в/ч', text)
+    if army:
+        # Если в строке есть наименование воинской части, то ищем код в тексте вне ВЧ
+        match = re.search(r'\b\d{5}\b', text[:army.start()] + text[army.end()+5:])
+        if match:
+            result = match.group()
+            if result != '31112':
+                return result
+
+    # Если в наименовании нет указаний на воинскую часть.
+    else:
+        match = re.search(CODE_PATTERN, text)
+        if match:
+            result = match.group(1) if match.group(1) else match.group(2)
+            if result != '31112':
+                return result
 
 
 def get_store_code(file_path: str) -> str | None:
@@ -61,11 +88,17 @@ def get_store_code(file_path: str) -> str | None:
             cell_text = cells[1].text.strip()  # Текст из второй колонки.
 
             # Ищем код магазина
-            match = re.search(CODE_PATTERN, cell_text)
-            if match:
-                result = match.group(1) if match.group(1) else match.group(2)
-                if result != '31112':
-                    return result
+            result = search_code(cell_text)
+            if result:
+                return result
+
+
+            # # Ищем код магазина
+            # match = re.search(CODE_PATTERN, cell_text)
+            # if match:
+            #     result = match.group(1) if match.group(1) else match.group(2)
+            #     if result != '31112':
+            #         return result
 
 
 def rename_a_file(dir_: str, old_name: str, new_name: str, extension: str) -> None:
@@ -126,6 +159,7 @@ def rename_the_files_in_dir(dir_with_pdf_files: str) -> None:
 
     # Цикл по word файлам.
     for word_file in word_files:
+        print(word_file)
 
         # Проверка, что файл еще не переименованный.
         if check_name_word_file(word_file):
@@ -145,10 +179,14 @@ def rename_the_files_in_dir(dir_with_pdf_files: str) -> None:
         if isinstance(date, bool):
             raise DataNotFounError(path_word_file)
 
-        # Обработать дату.
-        date = process_date(date)
+        # Проверка, что не гарантийное письмо.
+        if date == 'guarantee':
+            new_name = 'Гарантийное письмо' + str(random.randint(1, 1000))
 
-        new_name = store_code + ' ' + date
+        else:
+            # Обработать дату.
+            date = process_date(date)
+            new_name = store_code + ' ' + date
 
         rename_a_file(dir_with_pdf_files, pdf_file, new_name, '.pdf')
         rename_a_file(dir_for_word_files, word_file, new_name, '.docx')
@@ -156,4 +194,5 @@ def rename_the_files_in_dir(dir_with_pdf_files: str) -> None:
     print('Все файлы успешно переименованы.')
 
 
-rename_the_files_in_dir()
+if __name__ == '__main__':
+    rename_the_files_in_dir(r'C:\Users\RIMinullin\Desktop\не конвертирует\pdf')

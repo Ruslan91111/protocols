@@ -1,4 +1,3 @@
-""" Протестировать создание модели ProdControl """
 import datetime
 
 import pytest

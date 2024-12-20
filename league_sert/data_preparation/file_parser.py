@@ -109,6 +109,8 @@ def find_out_table_type(first_row_cells: list) -> str | None:
     # Проверяем не является ли это продолжением таблицы с результатами.
     # Если является, то возвращаем тип таблицы результаты RESULTS.
     for pattern in ConvertValueTypes:
+        if pattern == ConvertValueTypes.NONE:
+            continue
         match_ = re.search(pattern.value, first_row_cells[1].text)
         match_2 = re.search(pattern.value, first_row_cells[2].text)
         if match_ or match_2:

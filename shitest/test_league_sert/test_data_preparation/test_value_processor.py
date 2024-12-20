@@ -1,10 +1,9 @@
 """ Тестирование модуля value_processor."""
 import pytest
 
-from league_sert.data_preparation.common import ComparTypes
+from league_sert.constants import ComparTypes, ConvertValueTypes
 from league_sert.data_preparation.exceptions import DetermineValueTypeError
 from league_sert.data_preparation.value_processor import (define_value_type,
-                                                          ConvertValueTypes,
                                                           to_process_the_value)
 
 PLUS: str = r'\d\s?[+±]\s?\d'  # 16,34±0,15;  +

@@ -37,8 +37,7 @@ def extract_and_prepare_data(word_file: str):
         data_collector.data_from_tables)
 
     # Объединяем таблицы описаний проб и таблицы результатов исследований.
-    data_collector.data_from_tables = refine_and_merge_tables(
-        data_collector.data_from_tables)
+    data_collector.data_from_tables = refine_and_merge_tables(data_collector.data_from_tables)
 
     # Объединяем данные по производственному контролю.
     data_collector.merge_prod_control()

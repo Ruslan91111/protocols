@@ -1,4 +1,3 @@
-""" Тестирование создание объекта класса StoreProd"""
 import datetime
 
 import pytest

@@ -3,7 +3,7 @@ import copy
 import pandas as pd
 import pytest
 
-from constants import KEYS_FOR_MAPPING_MODEL_PROTOCOL
+from work_with_tables_in_db import KEYS_FOR_MAPPING_MODEL_PROTOCOL
 
 
 def test_add_valid_store_to_db(store_manager, test_session):
@@ -70,7 +70,7 @@ def test_add_protocol_to_db(request, protocol_manager, test_session, data_for_in
     data_for_db = request.getfixturevalue(data_for_input)  # Словарь для записи в БД
     expected_data_from_db = request.getfixturevalue(data_from_db)  # Ожидаемые данные из БД
 
-    protocol_manager.add_protocol_to_db(data_for_db)  # Записать данные в БД
+    protocol_manager.create_protocol(data_for_db)  # Записать данные в БД
     protocol = protocol_manager.get_all_protocols()[0]
     keys_for_data_from_db = expected_data_from_db.keys()  # список всех атрибутов протокола
 
@@ -92,10 +92,10 @@ def test_add_protocol_to_db_already_exist(protocol_manager,
                                       data_from_word_file_1):
     """ Тест добавления протокола в базу данных. """
     data_for_first_object = data_from_word_file_1  # Словарь для записи в БД
-    protocol_manager.add_protocol_to_db(data_for_first_object)  # Записать данные в БД
+    protocol_manager.create_protocol(data_for_first_object)  # Записать данные в БД
     data_for_object_with_same_id = copy.deepcopy(data_for_first_object)
     data_for_object_with_same_id['Сопроводительные документы'] = 1
-    protocol_manager.add_protocol_to_db(data_for_object_with_same_id)  # Записать данные в БД
+    protocol_manager.create_protocol(data_for_object_with_same_id)  # Записать данные в БД
     protocols = protocol_manager.get_all_protocols()
     assert len(protocols) == 1  # Проверка, что в БД один объект и второй не записан
     protocol = protocols[0]
@@ -106,8 +106,8 @@ def test_add_protocol_to_db_already_exist(protocol_manager,
 def test_delete_all_protocols_from_table(protocol_manager, test_session,
                                          data_from_word_file_1, data_from_word_file_2):
     """ Тест удаления всех протоколов из базы данных. """
-    protocol_manager.add_protocol_to_db(data_from_word_file_1)
-    protocol_manager.add_protocol_to_db(data_from_word_file_2)
+    protocol_manager.create_protocol(data_from_word_file_1)
+    protocol_manager.create_protocol(data_from_word_file_2)
     protocols = protocol_manager.get_all_protocols()
     assert len(protocols) == 2
     protocol_manager.delete_all_protocols_from_table()

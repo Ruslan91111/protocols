@@ -5,7 +5,10 @@ from enum import Enum
 FINE_READER_PROCESS = 'FineReader.exe'
 WORD_PROCESS = 'WINWORD.EXE'
 
-CODE_PATTERN = r'[\s№(]\s?(\d{5})[\s),]|^(\d{5})[.,]'
+CODE_PATTERN = r'[\s№(]*[^в/ч]\s?\b(\d{5})\b[\s),]|^(\d{5})\b[.,]'
+
+# Старый
+# CODE_PATTERN = r'[\s№(]\s?(\d{5})[\s),]|^(\d{5})[.,]'
 
 DIGITS_IN_DEGREE = {'⁰': 0, '¹': 1, '²': 2, '³': 3, '⁴': 4,
                     '⁵': 5, '⁶': 6, '⁷': 7, '⁸': 8, '⁹': 9}
@@ -109,10 +112,9 @@ class WordsPatterns(Enum):
     SAMPLE_CODE = r'Шифр пробы'
 
 
-
 class TypesOfTable(enum.Enum):
     """ Паттерны для определения типа таблицы. """
-    MAIN: str = r'Заяви?тель'
+    MAIN: str = r'Заяви?\s*[тг]ель'
     MEASURING: str = r'аименовани[ес] ср[ео]дс[гт]\s*ва\s+изм'
     SAMPLE: str = WordsPatterns.SAMPLE_CODE.value
     PROD_CONTROL: str = (f'({WordsPatterns.PLACE_OF_MEASUREMENT.value}|'
@@ -149,12 +151,12 @@ class ConvertValueTypes(Enum):
     NO_MORE: str = r'до \d+,?\d*'  # до 1,5
     WITHIN: str = r'\d+\,?\d*\s?-\s?\d+\,?\d*\b'  # 2,0 - 4,2
     LESS: str = r'менее \d+,?\d*|<\d+,?\d*'  # менее 0,10 <0,001
-    NOT_FOUND: str = r'([лнп][ес]|ис) обнаружено|(н[ес]|ис) обнаружены'  # не обнаружено в 25,0 г
+    NOT_FOUND: str = r'([лнп][ес]|ис|tie) обнаружено|(н[ес]|ис) обнаружены'  # не обнаружено в 25,0 г
     DIGIT: str = r'\d+,?\d*'  # 9,0
     NONE: str = r'^\s*[-—]\s*$|^$|^\s*■\s*$|^\s*⁰\s*$|^\s*■-\s*$'  # '-'
     NO_CHANGE: str = r'о[тг]сутствие изменений|о[тг]сутствие|не изменен'
     NOT_ALLOWED: str = r'[пнли][ес] допускаю\s?т\s*ся'
-
+    # SMELL: str = r'з\s*а\s*п\s*а\s*х\s*'
 
 WRONG_PARTS_IN_ROW = [
     'Физико-химические показатели',
@@ -177,8 +179,3 @@ WRONG_FIRST_CELLS_IN_TAB = [
     'Микробиологические показатели',
     'Микробиологические исследования',
 ]
-
-
-
-
-
