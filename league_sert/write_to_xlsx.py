@@ -217,7 +217,7 @@ SELECT
     END AS Соответствие_нормам_показатель_с_отклонением,    
     washings.norm_doc AS Нормативные_документы,
     
-    NULL AS Место_отбора_пробы,        
+    washings.sampling_site AS Место_отбора_пробы,    
     NULL AS Единица_измерения,    
     NULL AS номер_протокола_производственного_контроля,    
     CAST(NULL AS date) AS Дата_протокола_производственного_контроля,    
@@ -303,7 +303,6 @@ def write_db_data_to_xlsx(sql_query: str, output_xlsx: str) -> None:
         df.to_excel(output_xlsx, index=False)
 
 
-XLSX_PATH = 'probe.xlsx'
-
 if __name__ == '__main__':
+    XLSX_PATH = 'probe.xlsx'
     write_db_data_to_xlsx(QUERY_ALL, XLSX_PATH)

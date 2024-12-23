@@ -88,40 +88,27 @@ def write_files_to_db_from_dir(dir_path):
 
     recorded =read_viewed_from_file(VIEWED_FILE)
     for file in os.listdir(dir_path):
-        # if '$' in file or file in recorded:
-        #     continue
+        if '$' in file or file in recorded:
+            continue
 
-        # try:
-        print(file)
-        # Получить и подготовить данные из word файла
-        data_from_file = extract_and_prepare_data(dir_path + '\\' + file)
-        # Создать объекты для записи в БД.
-        objects_for_db = create_all_objects(data_from_file)
-        # Записать объекты в БД.
-        write_objects_to_db(objects_for_db, prot_session_maker)
-        # Добавить в записанный
-        recorded.add(file)
+        try:
+            print(file)
+            # Получить и подготовить данные из word файла
+            data_from_file = extract_and_prepare_data(dir_path + '\\' + file)
+            # Создать объекты для записи в БД.
+            objects_for_db = create_all_objects(data_from_file)
+            # Записать объекты в БД.
+            write_objects_to_db(objects_for_db, prot_session_maker)
+            # Добавить в записанный
+            recorded.add(file)
 
-        # except Exception as e:
-        #     not_recorded.append(file)
-        #     with open(VIEWED_FILE, 'w', encoding='utf-8') as file:
-        #         file.write(",".join(recorded))
+        except Exception as e:
+            not_recorded.append(file)
+            with open(VIEWED_FILE, 'w', encoding='utf-8') as file:
+                file.write(",".join(recorded))
 
     with open(VIEWED_FILE, 'w', encoding='utf-8') as file:
         file.write(",".join(recorded))
 
     print(f'pas {len(recorded)}')
     print(f'unpas {len(not_recorded)}')
-
-examp_path1 = (r'C:\Users\RIMinullin\Desktop\Сканы Оригиналы август-сентябрь 2024\word_files')
-examp_path2 = (r'C:\Users\RIMinullin\Desktop\Сентябрь-октябрь 2024\word_files')
-
-
-if __name__ == '__main__':
-    start = time.time()
-    write_files_to_db_from_dir(examp_path1)
-    write_files_to_db_from_dir(examp_path2)
-    # write_file_to_db(r'C:\Users\RIMinullin\PycharmProjects\protocols\tests\test_league_sert\test_files\test_word_file_1.docx')
-    # write_file_to_db(r'C:\Users\RIMinullin\PycharmProjects\protocols\tests\test_league_sert\test_files\test_word_file_2.docx')
-    # write_file_to_db(r'C:\Users\RIMinullin\PycharmProjects\protocols\tests\test_league_sert\test_files\test_word_file_3.docx')
-    print(time.time() - start)
