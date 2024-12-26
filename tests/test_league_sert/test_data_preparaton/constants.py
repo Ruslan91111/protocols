@@ -9,6 +9,7 @@ TEST_WORD_FILES = [
     os.path.join(TEST_FILES_DIR, 'test_word_file_1.docx'),
     os.path.join(TEST_FILES_DIR, 'test_word_file_2.docx'),
     os.path.join(TEST_FILES_DIR, 'test_word_file_3.docx'),
+    os.path.join(TEST_FILES_DIR, 'table_1.docx'),
 ]
 
 COLLECTORS = [
@@ -16,4 +17,3 @@ COLLECTORS = [
     expected_collector_2,
     expected_collector_3
 ]
-

@@ -57,7 +57,7 @@ class ComparTypes(Enum):
     WITHIN: str = r'\d+\,?\d*\s?-\s?\d+\,?\d*\b'  # 2,0 - 4,2
     UP_TO: str = r'\bдо\b\s\d+\,?\d*\b'  # до 1,5
 
-    NOT_ALLOWED: str = (r'\b[нпли][ес] допускаю\s*т\s*ся|'
+    NOT_ALLOWED: str = (r'\b[нпли][ес] допускаю\s*[тг]\s*[се]я|'
                         r'^[“\s]*[-—]\s*$|'
                         r'^$|'
                         r'[нпл][ес] обнаружено|'
@@ -68,6 +68,7 @@ class ComparTypes(Enum):
     NO_MORE: str = r'\bне более\b'  # не более 220,0
     DIGIT: str = r'\d+,?\d*'  # 220
     NO_CHANGE: str = r'о[тг]сутствие изменений'
+    SMELL_TASTE: str = r'(з\s*а\s*п\s*а\s*х\s*)|(в\s*к\s*у\s*с)'
 
 
 class MsgForUser(Enum):
@@ -151,12 +152,12 @@ class ConvertValueTypes(Enum):
     NO_MORE: str = r'до \d+,?\d*'  # до 1,5
     WITHIN: str = r'\d+\,?\d*\s?-\s?\d+\,?\d*\b'  # 2,0 - 4,2
     LESS: str = r'менее \d+,?\d*|<\d+,?\d*'  # менее 0,10 <0,001
-    NOT_FOUND: str = r'([лнп][ес]|ис|tie) обнаружено|(н[ес]|ис) обнаружены'  # не обнаружено в 25,0 г
+    NOT_FOUND: str = r'([лнпи][есо]|tie) обнаружен[оы]'  # не обнаружено в 25,0 г
     DIGIT: str = r'\d+,?\d*'  # 9,0
     NONE: str = r'^\s*[-—]\s*$|^$|^\s*■\s*$|^\s*⁰\s*$|^\s*■-\s*$'  # '-'
     NO_CHANGE: str = r'о[тг]сутствие изменений|о[тг]сутствие|не изменен'
-    NOT_ALLOWED: str = r'[пнли][ес] допускаю\s?т\s*ся'
-    # SMELL: str = r'з\s*а\s*п\s*а\s*х\s*'
+    NOT_ALLOWED: str = r'[пнли][ес] допускаю\s?[тг]\s*[се]я'
+    SMELL_TASTE: str = r'(з\s*а\s*п\s*а\s*х\s*)|(в\s*к\s*у\s*с)'
 
 WRONG_PARTS_IN_ROW = [
     'Физико-химические показатели',

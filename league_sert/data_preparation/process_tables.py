@@ -139,35 +139,63 @@ def rm_blank_rows_in_tab(tab_rows: list):
     return new_tab
 
 
-def join_split_rows(tab_rows: list):
+def join_split_rows(tab_rows: list) -> list:
     """ Если строка с заголовками таблицы показателей
     была разделена на две строки, то соединить их. """
-    i = 0
-    new_tab = []
-    # Цикл по строкам таблицы.
-    while i < len(tab_rows) - 1:
 
-        # Проверка, что текущая строка и следующая строки относятся к заголовкам таблицы.
-        match_cur_row = re.search(f'{NAME}|{RESULT}|{REQUIREMENTS}',
-                                  str(tab_rows[i]), re.IGNORECASE)
-        match_next_row = re.search(f'{NAME}|{RESULT}|{REQUIREMENTS}|{INDICATORS}',
-                                   str(tab_rows[i + 1]), re.IGNORECASE)
+    row_ind = 0
+    new_tab = []
+
+    # Цикл по строкам таблицы.
+    while row_ind < len(tab_rows) - 1:
+
+        # Проверка, что текущая строка относится к заголовкам таблицы.
+        match_cur_row = re.search(
+            f'{NAME}|{RESULT}|{REQUIREMENTS}',
+            str(tab_rows[row_ind]),
+            re.IGNORECASE)
+
+        # Если текущая строка заголовки, то проверяем,
+        # что следующая также относится к заголовкам таблицы.
+        if match_cur_row:
+            match_next_row = re.search(
+                f'{NAME}|{RESULT}|{REQUIREMENTS}|{INDICATORS}',
+                str(tab_rows[row_ind + 1]),
+                re.IGNORECASE)
 
         # Если строка была разделена на две, то соединить в одну и добавить в результат.
         if match_cur_row and match_next_row:
-            merged_row = [j + ' ' + k for j, k in zip(tab_rows[i], tab_rows[i + 1])]
+            merged_row = [j + ' ' + k for j, k in zip(tab_rows[row_ind], tab_rows[row_ind + 1])]
             new_tab.append(merged_row)
-            i += 2
+            row_ind += 2
 
         # Если обычная строка, то просто добавить в результат.
         else:
-            new_tab.append(tab_rows[i])
-            i += 1
+            new_tab.append(tab_rows[row_ind])
+            row_ind += 1
 
     # Добавить последнюю строку.
     new_tab.append(tab_rows[-1])
-
     return new_tab
+
+
+def fix_centimeter_cell(tab_rows: list) -> list:
+    """ Исправить ситуацию, когда в результате конвертации word
+    файла произошло разделение ячейки на две, и 'см' и его
+    производные перешли в отдельную ячейку. Если такой случай обнаружен,
+    то берем значение из того же столбца, но строкой выше и добавляем
+    оттуда значение."""
+
+    row_ind = 0
+    while row_ind < len(tab_rows) - 1:
+        for cell_ind, cell in enumerate(tab_rows[row_ind]):
+            patt = r'^(?<!\d)\(?см\d*\)?'
+            if re.search(patt, cell):
+                tab_rows[row_ind][cell_ind] = (
+                        tab_rows[row_ind - 1][cell_ind] + ' ' + cell)
+        row_ind += 1
+
+    return tab_rows
 
 
 def rm_invalid_cols_and_rows_from_tabs(tables: dict) -> dict:
@@ -187,8 +215,12 @@ def rm_invalid_cols_and_rows_from_tabs(tables: dict) -> dict:
 
         # Набор действий с каждой таблицей.
         tab_data = rm_blank_rows_in_tab(tab_data)  # Удалить строки с 1 значением.
-        tab_data = join_split_rows(tab_data)  # Соединить разделенные на 2 строки в 1.
-        new_tables[key] = rm_first_col_if_blank(tab_data)  # Удалить пустую колонку слева.
+        # Соединить разделенные на 2 строки в 1.
+        tab_data = join_split_rows(tab_data)
+        # Проверить на выделенную в отдельную ячейку 'см'
+        tab_data = fix_centimeter_cell(tab_data)
+        # Удалить пустую колонку слева.
+        new_tables[key] = rm_first_col_if_blank(tab_data)
 
     return new_tables
 

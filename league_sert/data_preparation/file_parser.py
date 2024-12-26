@@ -81,7 +81,36 @@ def get_text_with_superscripts(cell):
     return text
 
 
-def find_out_table_type(first_row_cells: list) -> str | None:
+def check_table_only_symbols(table_: Table):
+    """ Проверить, что таблица валидная, а не состоит только из символов.
+    Весь текст из ячеек собираем в один сплошной фрагмент.
+    Затем считаем количество определенных символов в этом тексте,
+    наподобие знаков переноса, табуляции и латинских букв.
+    Вывод о валидности таблицы делаем в зависимости от соотношения символов
+    к количеству ячеек.  """
+
+    row_count = 0
+    solid_text = ''
+    for row in table_.rows:
+        row_count += 1
+        for cell_ in row.cells:
+            solid_text += cell_.text
+
+    # Набор символов, который может указывать на не валидность таблицы.
+    pattern = r"[\n\t:>’'\"»«?\{\}!■•A-Za-z\\]"
+
+    # Используем re.findall для нахождения всех вхождений
+    matches = re.findall(pattern, solid_text)
+
+    # Подсчитываем общее количество вхождений символов и соотносим с количеством ячеек.
+    specific_symbols = len(matches)
+    if specific_symbols > row_count * len(row.cells):
+        return False
+    return True
+
+
+def find_out_table_type(first_row_cells: list,
+                        table_: Table) -> str | None:
     """ Определить тип таблицы по содержанию первой строки в таблице.
     Возможные типы - это основная, данные о пробе, результаты исследования, данные
     о средствах измерения производственного контроля, сам производственный контроль.
@@ -94,6 +123,10 @@ def find_out_table_type(first_row_cells: list) -> str | None:
     for cell_ in first_row_cells:
         cells_text += (cell_.text + ' ')
 
+
+
+
+
     # Перебираем паттерны таблиц и сравниваем с содержимым первой строки
     for pattern in TypesOfTable:
         if re.search(pattern.value, cells_text, re.IGNORECASE):
@@ -105,6 +138,17 @@ def find_out_table_type(first_row_cells: list) -> str | None:
     # Проверяем полноценная ли и самодостаточная это таблица.
     if len(first_row_cells) <= 2:  # Смотрим сколько ячеек в строке.
         return None
+
+
+
+
+
+    # Здесь вызов метода на проверку, что это не таблица с символами.
+    if not check_table_only_symbols(table_):
+        return None
+
+
+
 
     # Проверяем не является ли это продолжением таблицы с результатами.
     # Если является, то возвращаем тип таблицы результаты RESULTS.
@@ -298,7 +342,11 @@ class CollectorFromTable:
                 first_row_cells = self.current_table.row_cells(1)
 
             # Определить тип таблицы.
-            type_of_table = find_out_table_type(first_row_cells)
+            type_of_table = find_out_table_type(first_row_cells, self.current_table)
+            # Строку выше засунуть в блок , если вылезла ошибка, то
+
+            if type_of_table is None:
+                continue
 
             # Сформировать ключ для таблицы в общих данных.
             self.key_of_current_table = (table_number, type_of_table)

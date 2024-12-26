@@ -85,7 +85,7 @@ def get_session():
     return scoped_session(session_factory)
 
 
-@pytest.fixture(scope='module', autouse=True)
+@pytest.fixture(scope='function', autouse=True)
 def setup_database():
     create_test_db()
     session = get_session()

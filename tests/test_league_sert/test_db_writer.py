@@ -70,7 +70,7 @@ def test_write_some_files_to_db(setup_database):
     session = setup_database
 
     # Записать данные из трех файлов в БД.
-    for file in TEST_WORD_FILES:
+    for file in TEST_WORD_FILES[:3]:
         data_from_file = extract_and_prepare_data(file)
         objects_for_db = create_all_objects(data_from_file)
         write_objects_to_db(objects_for_db, session)

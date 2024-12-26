@@ -6,7 +6,7 @@ from docx import Document
 from league_sert.data_preparation.exceptions import TypeOfTableError
 from league_sert.data_preparation.file_parser import (
     get_text_with_superscripts, find_out_table_type,
-    collect_prod_control_data)
+    collect_prod_control_data, check_table_only_symbols)
 from league_sert.data_preparation.extract_numb_and_date import get_main_numb_and_date
 from tests.test_league_sert.test_data_preparaton.constants import TEST_WORD_FILES
 from tests.test_league_sert.test_data_preparaton.data_for_test.test_data_text_numb_date import DATA_NUMB_DATE, \
@@ -51,7 +51,7 @@ def test_find_out_type_of_table_raises_error():
     cell1 = create_cell_with_text(document, "Непонятные символы", superscript_indices=[])
     cell2 = create_cell_with_text(document, "some", superscript_indices=[])
     with pytest.raises(TypeOfTableError) as excinfo:
-        find_out_table_type([cell0, cell1, cell2])
+        find_out_table_type([cell0, cell1, cell2], document.tables[0])
     assert cell1.text in str(excinfo.value)
 
 
@@ -89,3 +89,21 @@ def test_collect_prod_control_data():
     assert result_data['inner_conclusion'] == (
         '- на момент проведения измерений параметры микроклимата, '
         'уровни шума и общей вибрации соответствуют требованиям')
+
+
+def test_check_table_only_symbols():
+    """ Протестировать проверку таблиц. Задача - выявить
+     таблицу, состоящую из одних символов."""
+
+    doc = Document(TEST_WORD_FILES[3])
+    table_ = doc.tables[0]
+    only_symbols = check_table_only_symbols(table_)
+    assert only_symbols is False
+
+    table_ = doc.tables[1]
+    only_symbols = check_table_only_symbols(table_)
+    assert only_symbols is True
+
+    table_ = doc.tables[2]
+    only_symbols = check_table_only_symbols(table_)
+    assert only_symbols is True
