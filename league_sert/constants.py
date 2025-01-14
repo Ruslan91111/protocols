@@ -2,6 +2,7 @@
 import enum
 from enum import Enum
 
+
 FINE_READER_PROCESS = 'FineReader.exe'
 WORD_PROCESS = 'WINWORD.EXE'
 
@@ -102,7 +103,7 @@ class ProdControlPatt(Enum):
 class WordsPatterns(Enum):
     NAME = r'[Н]аим[ес]нован\s*[ин][е]'
     INDICATORS = r'Показател[ия]'
-    RESULT = r"Р[ес]зул[ьы][тг]*а[тг]\s*"
+    RESULT = r"Р[ес]зул\s*[ьы][тг]*а[тг]\s*"
     REQUIREMENTS = r'Требовани[яи]'
     RESULT_OF_MEASUREMENT = RESULT + "измерений"
     SAMPLING_SITE = r"Место отбора проб"
@@ -116,7 +117,7 @@ class WordsPatterns(Enum):
 class TypesOfTable(enum.Enum):
     """ Паттерны для определения типа таблицы. """
     MAIN: str = r'Заяви?\s*[тг]ель'
-    MEASURING: str = r'аименовани[ес] ср[ео]дс[гт]\s*ва\s+изм'
+    MEASURING: str = r'аим[ес]нова[нк]и[ес] ср[ео]дс[гт]\s*ва\s+изм'
     SAMPLE: str = WordsPatterns.SAMPLE_CODE.value
     PROD_CONTROL: str = (f'({WordsPatterns.PLACE_OF_MEASUREMENT.value}|'
                          f'{WordsPatterns.PARAMETER.value})')
@@ -152,12 +153,13 @@ class ConvertValueTypes(Enum):
     NO_MORE: str = r'до \d+,?\d*'  # до 1,5
     WITHIN: str = r'\d+\,?\d*\s?-\s?\d+\,?\d*\b'  # 2,0 - 4,2
     LESS: str = r'менее \d+,?\d*|<\d+,?\d*'  # менее 0,10 <0,001
-    NOT_FOUND: str = r'([лнпи][есо]|tie) обнаружен[оы]'  # не обнаружено в 25,0 г
+    NOT_FOUND: str = r'([нлпи][есо]|tie) обнару(ж|ок)[ес]н[оы]'  # не обнаружено в 25,0 г
     DIGIT: str = r'\d+,?\d*'  # 9,0
     NONE: str = r'^\s*[-—]\s*$|^$|^\s*■\s*$|^\s*⁰\s*$|^\s*■-\s*$'  # '-'
     NO_CHANGE: str = r'о[тг]сутствие изменений|о[тг]сутствие|не изменен'
     NOT_ALLOWED: str = r'[пнли][ес] допускаю\s?[тг]\s*[се]я'
     SMELL_TASTE: str = r'(з\s*а\s*п\s*а\s*х\s*)|(в\s*к\s*у\s*с)'
+
 
 WRONG_PARTS_IN_ROW = [
     'Физико-химические показатели',
@@ -165,13 +167,14 @@ WRONG_PARTS_IN_ROW = [
     'Микробиологические (показатели|исследования)',
     'От\s*ветственный за оформление',
     'Аверкова',
-    'подпись',
+    '[пХ]одпись',
     'Токсичные элементы, мг/кг:',
     'Пестициды, мг/кг:',
     'Ф.И.О.',
     'анализатор жидкости',
     'Данные о пробе',
     'Прибор комбинированный',
+    'Д[ао][нч]ная пр[оея]'
 ]
 
 
@@ -180,3 +183,33 @@ WRONG_FIRST_CELLS_IN_TAB = [
     'Микробиологические показатели',
     'Микробиологические исследования',
 ]
+
+TEST_OBJECT = r'о\s*б\s*[ъ>]\s*е\s*к\s*т\s*и\s*с\s*с\s*л\s*е\s*д'
+
+
+class TableWords(Enum):
+    UP_TO: str = r'\bдо\b'  # до 1,5
+    NOT_ALLOWED: str = (r'\b[нпли][ес] допускаю\s*[тг]\s*[се]я|'
+                        r'[нпл][ес] обнаружено|'
+                        r'^о[тг]сутствие$|')
+
+    AT_LEAST: str = r'\bне\s*менее\b'  # не менее 9,0
+    NO_MORE: str = r'\bне\s*более\b'  # не более 220,0
+    NO_CHANGE: str = r'о[тг]сутствие изменений'
+    SMELL_TASTE: str = r'(з\s*а\s*п\s*а\s*х\s*)|(в\s*к\s*у\s*с)'
+
+
+TABLE_WORDS_PATTERN = (r"[Н]аим[ес]нован\s*[ин][е]|"
+                 r"Показател|"
+                 r"Требовани|"
+                 r"измерений|"
+                 r"Место|"
+                 r"Измеряемый|"
+                 r"параметр|"
+                 r"Единицы|"
+                 r"Шифр|"
+                 r"допускаю|"
+                 r"обнаружено|"
+                 r"сутствие$|"
+                 r"запах|"
+                 r"вкус")

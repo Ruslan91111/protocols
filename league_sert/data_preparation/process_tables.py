@@ -9,7 +9,7 @@
 """
 import re
 
-from league_sert.constants import WordsPatterns
+from league_sert.constants import WordsPatterns, TEST_OBJECT
 from league_sert.data_preparation.add_conclusions import find_out_results_table_type
 
 
@@ -120,6 +120,59 @@ def rm_first_col_if_blank(tab_rows: list[list]) -> list:
     return tab_rows
 
 
+def join_divided_sample_code(tab_rows: list[list]) -> list | tuple[dict, str]:
+    """ В случае, если в таблице ячейки из первой колонки
+     разделило на две колонки. Собрать в одну колонку и исправить
+     ключи 'Шифр пробы' и 'Объект исследований' """
+
+    # Проверка, что эта таблица с шифром пробы, поделенная на 2 ячейки.
+    if (len(tab_rows[0]) == 3 and
+            re.search(r'\bШ', tab_rows[0][0], re.IGNORECASE) and
+            re.search(r'\bпроб', tab_rows[0][1], re.IGNORECASE)):
+
+        new_rows = []
+        # Перебираем строки и соединяем разделенные значения,
+        # попутно, не допуская дублирования значений.
+        for row in tab_rows:
+            if row[0] != row[1]:
+                new_rows.append([row[0] + row[1], row[2]])
+            else:
+                new_rows.append([row[0], row[2]])
+
+        # Исправляем орфографические ошибки, допущенные в ключах.
+        new_rows[0][0] = 'Шифр пробы'
+        for ind, row in enumerate(new_rows):
+            if re.search(TEST_OBJECT, row[0], re.IGNORECASE):
+                new_rows[ind][0] = 'Объект исследований'
+        new_rows = {row[0]: row[1] for row in new_rows}
+        return new_rows, 'SAMPLE'
+    return tab_rows
+
+
+def join_from_2_cols_to_1(tab_rows):
+    """ Если первая колонка таблицы ошибочно была поделена на два значения
+     выполнить их объединение. """
+
+    # Если в таблице всего одна или две колонки, то просто вернуть таблицу.
+    if len(tab_rows) <= 2:
+        return tab_rows
+
+    new_rows = []
+    for row in tab_rows:
+
+        # Проверяем, чтобы первое и второе значение в ряде либо идентичное,
+        # либо одно из них пустое.
+        if row[0] == row[1] or (row[0] == '' or row[1] == ''):
+            # Объединяем первое значение в ряде.
+            joined_row = ["".join(set([row[0], row[1]]))]
+            # Заполняем остальными значениями из ряда.
+            joined_row.extend(row[2:])
+            new_rows.append(joined_row)
+        else:
+            return tab_rows  # Возвращаем старые строки
+    return new_rows  # Возвращаем новые строки
+
+
 def rm_blank_rows_in_tab(tab_rows: list):
     """ Убрать строки с пустыми значениями или определенными словами.
 
@@ -214,13 +267,27 @@ def rm_invalid_cols_and_rows_from_tabs(tables: dict) -> dict:
             continue
 
         # Набор действий с каждой таблицей.
-        tab_data = rm_blank_rows_in_tab(tab_data)  # Удалить строки с 1 значением.
+
+        # Удалить строки с 1 значением.
+        tab_data = rm_blank_rows_in_tab(tab_data)
+
         # Соединить разделенные на 2 строки в 1.
         tab_data = join_split_rows(tab_data)
+
         # Проверить на выделенную в отдельную ячейку 'см'
         tab_data = fix_centimeter_cell(tab_data)
+
         # Удалить пустую колонку слева.
-        new_tables[key] = rm_first_col_if_blank(tab_data)
+        tab_data = rm_first_col_if_blank(tab_data)
+
+        # Исправит разделение колонки на две с шифрами проб.
+        united = join_divided_sample_code(tab_data)
+        united = join_from_2_cols_to_1(united)
+
+        if isinstance(united, tuple):
+            new_tables[(key[0], united[1])] = united[0]
+        else:
+            new_tables[key] = united
 
     return new_tables
 

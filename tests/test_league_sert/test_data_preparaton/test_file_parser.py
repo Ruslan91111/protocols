@@ -44,17 +44,6 @@ def test_get_text_with_superscripts(cell, expected):
     assert result == expected
 
 
-def test_find_out_type_of_table_raises_error():
-    """ Проверка возникновения исключения при тексте в первых
-    ячейках таблицы, не подпадающем под паттерны."""
-    cell0 = create_cell_with_text(document, "", superscript_indices=[])
-    cell1 = create_cell_with_text(document, "Непонятные символы", superscript_indices=[])
-    cell2 = create_cell_with_text(document, "some", superscript_indices=[])
-    with pytest.raises(TypeOfTableError) as excinfo:
-        find_out_table_type([cell0, cell1, cell2], document.tables[0])
-    assert cell1.text in str(excinfo.value)
-
-
 def test_get_main_numb_and_date():
     """ Протестировать извлечение номер и даты основной части протокола."""
     text = ("Акт отбора проб № 4639 от 13.05.2024 г. Количество зашифрованных проб "

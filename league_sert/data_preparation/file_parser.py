@@ -39,6 +39,7 @@
     data_getter.prod_control_data - атрибут
 
 """
+import itertools
 import re
 
 from docx import Document
@@ -46,7 +47,8 @@ from docx.table import Table
 from docx2txt import docx2txt
 
 from league_sert.constants import (PattNumbDate, ProdControlPatt, TypesOfTable,
-                                   WRONG_PARTS_IN_ROW, ConvertValueTypes)
+                                   WRONG_PARTS_IN_ROW, ConvertValueTypes, ComparTypes, WordsPatterns, TableWords,
+                                   TABLE_WORDS_PATTERN)
 from league_sert.data_preparation.exceptions import TypeOfTableError
 from league_sert.data_preparation.extract_numb_and_date import get_main_numb_and_date
 
@@ -84,10 +86,8 @@ def get_text_with_superscripts(cell):
 def check_table_only_symbols(table_: Table):
     """ Проверить, что таблица валидная, а не состоит только из символов.
     Весь текст из ячеек собираем в один сплошной фрагмент.
-    Затем считаем количество определенных символов в этом тексте,
-    наподобие знаков переноса, табуляции и латинских букв.
-    Вывод о валидности таблицы делаем в зависимости от соотношения символов
-    к количеству ячеек.  """
+    Затем ищем в таблице определенные слова, свидетельствующие о том, что
+    это таблица, а не набор символов. """
 
     row_count = 0
     solid_text = ''
@@ -96,21 +96,11 @@ def check_table_only_symbols(table_: Table):
         for cell_ in row.cells:
             solid_text += cell_.text
 
-    # Набор символов, который может указывать на не валидность таблицы.
-    pattern = r"[\n\t:>’'\"»«?\{\}!■•A-Za-z\\]"
-
-    # Используем re.findall для нахождения всех вхождений
-    matches = re.findall(pattern, solid_text)
-
-    # Подсчитываем общее количество вхождений символов и соотносим с количеством ячеек.
-    specific_symbols = len(matches)
-    if specific_symbols > row_count * len(row.cells):
-        return False
-    return True
+    matches = re.search(TABLE_WORDS_PATTERN, solid_text, re.IGNORECASE)
+    return True if matches else False
 
 
-def find_out_table_type(first_row_cells: list,
-                        table_: Table) -> str | None:
+def find_out_table_type(first_row_cells: list, table_: Table) -> str | None:
     """ Определить тип таблицы по содержанию первой строки в таблице.
     Возможные типы - это основная, данные о пробе, результаты исследования, данные
     о средствах измерения производственного контроля, сам производственный контроль.
@@ -122,10 +112,6 @@ def find_out_table_type(first_row_cells: list,
     cells_text = ''
     for cell_ in first_row_cells:
         cells_text += (cell_.text + ' ')
-
-
-
-
 
     # Перебираем паттерны таблиц и сравниваем с содержимым первой строки
     for pattern in TypesOfTable:
@@ -139,16 +125,9 @@ def find_out_table_type(first_row_cells: list,
     if len(first_row_cells) <= 2:  # Смотрим сколько ячеек в строке.
         return None
 
-
-
-
-
     # Здесь вызов метода на проверку, что это не таблица с символами.
     if not check_table_only_symbols(table_):
         return None
-
-
-
 
     # Проверяем не является ли это продолжением таблицы с результатами.
     # Если является, то возвращаем тип таблицы результаты RESULTS.
@@ -229,6 +208,7 @@ def collect_prod_control_data(text) -> dict:
         # Заменяем возможные ошибки при распознавании 'б' на '6'.
         text = re.sub(r'«(\d)?\s*б»', _replace_to_6_in_text, text)
         text = re.sub(r'«II»', "«11»", text)
+        text = re.sub(r'«И»', "«11»", text)
 
         # Ищем номер протокола.
         match_number_of_protocol = re.search(PattNumbDate.NUMBER.value, text)
@@ -343,7 +323,7 @@ class CollectorFromTable:
 
             # Определить тип таблицы.
             type_of_table = find_out_table_type(first_row_cells, self.current_table)
-            # Строку выше засунуть в блок , если вылезла ошибка, то
+            # Строку выше засунуть в блок, если вылезла ошибка, то
 
             if type_of_table is None:
                 continue
