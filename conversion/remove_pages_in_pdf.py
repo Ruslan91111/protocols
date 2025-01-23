@@ -26,7 +26,7 @@ def remove_pdf_pages(pdf_path: str, pages_to_remove: list, output_path: str):
 
 
 if __name__ == '__main__':
-    PATH_PDF = r'C:\Users\RIMinullin\Desktop\не конвертирует\pdf\scan_20241212131828.pdf'
-    OUTPUT_PDF = r'C:\Users\RIMinullin\Desktop\не конвертирует\pdf\scan_20241212131828_rm.pdf'
+    PATH_PDF = r'C:\Users\RIMinullin\Desktop\2024\77147 31.01.2024.pdf'
+    OUTPUT_PDF = r'C:\Users\RIMinullin\Desktop\2024\77147 31.01.2024_rm.pdf'
 
-    remove_pdf_pages(PATH_PDF, [5, 7, 9], OUTPUT_PDF)
+    remove_pdf_pages(PATH_PDF, [3,5,7,9], OUTPUT_PDF)

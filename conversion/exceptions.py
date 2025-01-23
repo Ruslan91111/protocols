@@ -21,7 +21,35 @@ class InvalidPathError(Exception):
         super().__init__("Указанный путь не существует. ")
 
 
-class DataNotFounError(Exception):
+class DateNotFoundError(Exception):
     """ Указанный путь не существует. """
     def __init__(self, path_word_file):
         super().__init__(f"Не найдена дата протокола в файле {path_word_file}")
+
+
+class StoreCodeError(Exception):
+    """ Указанный путь не существует. """
+    def __init__(self, path_word_file):
+        super().__init__(f" В файле {path_word_file} не найден код магазина.")
+
+
+class NumbDateNotFoundError(Exception):
+    """ Указанный путь не существует. """
+    def __init__(self, file):
+        super().__init__(f"При конвертации файла <{file}> "
+                         f"не найдены номер и дата протокола.")
+
+
+class PageNeedToRMError(Exception):
+    """ Указанный путь не существует. """
+    def __init__(self, file):
+        super().__init__(f"При конвертации файла <{file}> возникла ошибка, необходимо удалить "
+                         f"одну из страниц. ")
+
+
+class NoDirWithWordFilesError(Exception):
+    """ Указанный путь не существует. """
+    def __init__(self, path_dir):
+        super().__init__(
+            f"В переданной директории <{path_dir}> отсутствует директория "
+            f"с конвертированными word файлами. Переименование невозможно.")

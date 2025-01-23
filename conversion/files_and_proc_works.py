@@ -55,11 +55,14 @@
 задач, связанных с управлением файловой системой и взаимодействием с пользователем.
 """
 import os
+import time
+
 import py_win_keyboard_layout
 import pyautogui
 import psutil
 import pygetwindow as gw
-from conversion.exceptions import PathNotInputError, InvalidPathError
+from conversion.exceptions import PathNotInputError, InvalidPathError, PageNeedToRMError
+from league_sert.constants import FRScreens
 
 
 def change_keyboard_layout_on_english():
@@ -147,7 +150,15 @@ def is_specific_word_window_open(target_title: str):
 
 def is_file_in_dir(dir_, file):
     """ Проверка, что файл находится в директории. """
+
+    from conversion.screen_work import wait_scr
+
+    start = time.time()
     in_dir = False
-    while not in_dir:
+    while time.time() - start < 120 and not in_dir:
         files = set(os.listdir(dir_))
         in_dir = file in files
+        if in_dir:
+            return True
+    if wait_scr(FRScreens.ERROR_PAGE_NEED_TO_RM.value):
+        raise PageNeedToRMError(file)

@@ -73,8 +73,10 @@ def enhance_black(img):
     return img
 
 
-def process_pdf(input_pdf_path, output_pdf_path):
-    """ Обработать ПДФ файл."""
+def rm_stamps_from_pdf(input_pdf_path, output_pdf_path):
+    """ Обработать ПДФ файл, основное убрать из PDF файла оттиски печатей,
+    подписи и другие изображения синего цвета. """
+
     # Открыть PDF
     doc = fitz.open(input_pdf_path)
 
@@ -133,4 +135,4 @@ def rm_back_from_pdf_in_dir(dir_with_pdf_files: str) -> None:
         нуждающимися в удалении фоновых изображений синего цвета. """
 
     for file in os.listdir(dir_with_pdf_files):
-        process_pdf(dir_with_pdf_files + '\\' + file, dir_with_pdf_files + '\\без фона ' + file)
+        rm_stamps_from_pdf(dir_with_pdf_files + '\\' + file, dir_with_pdf_files + '\\без фона ' + file)

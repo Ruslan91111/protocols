@@ -1,6 +1,12 @@
+import sys
+from pathlib import Path
+
 from sqlalchemy import create_engine, text
 from sqlalchemy.orm import sessionmaker, scoped_session
 import pytest
+
+project_root = Path(__file__).resolve().parent.parent  # Adjust as needed
+sys.path.append(str(project_root))
 
 from league_sert.models.models import *
 from league_sert.models.models_creator import create_main_protocol
