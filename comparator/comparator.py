@@ -29,8 +29,8 @@ bool | list[bool]. list[bool] - возвращается, когда резул�
 """
 from league_sert.constants import ComparTypes
 from league_sert.data_preparation.exceptions import MethodOfComparisonError
-from league_sert.data_preparation.value_processor import to_process_the_value, \
-    define_value_type
+from league_sert.data_preparation.value_processor import (to_calculate_the_value,
+                                                          define_value_type)
 
 
 class Comparator:
@@ -39,8 +39,8 @@ class Comparator:
 
     def __init__(self, result: str, norm: str):
         self.comparison_type = define_value_type(norm, ComparTypes)
-        self.result = to_process_the_value(result.strip('.').strip(' '))  # Результат исследования
-        self.norm = to_process_the_value(norm.strip('.').strip(' '))  # Нормы
+        self.result = to_calculate_the_value(result)  # Результат исследования
+        self.norm = to_calculate_the_value(norm)  # Нормы
         self.conclusion = None  # Вывод о наличии нарушений нормам.
 
     def compare_within(self):
@@ -81,6 +81,11 @@ class Comparator:
         else:
             self.conclusion = self.result <= self.norm
 
+    def compare_smell_taste(self):
+        """ Сравнение, когда нормы определены в виде
+        'не более определенного значения'. """
+        self.conclusion = False
+
     def compare(self):
         """ Выполнение операции сравнения в зависимости от типа сравнения. """
         comparison_methods = {
@@ -91,6 +96,7 @@ class Comparator:
             ComparTypes.NO_MORE.name: self.compare_no_more,
             ComparTypes.DIGIT.name: self.compare_no_more,
             ComparTypes.NO_CHANGE.name: self.compare_no_more,
+            ComparTypes.SMELL_TASTE.name: self.compare_smell_taste,
         }
         comparison_method = comparison_methods.get(self.comparison_type)
         if comparison_method:

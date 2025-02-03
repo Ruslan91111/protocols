@@ -122,6 +122,11 @@ def split_code_and_address(sampling_place: str, apllicant_info: str) -> tuple[st
     raise AddressNotFoundError(sampling_place + ' ' + apllicant_info)
 
 
+def remove_spaces_between_numbers(s):
+    """ Убрать пробелы в годе, 20 23 """
+    return re.sub(r'(\d)\s+(\d)', r'\1\2', s)
+
+
 def create_date(date_: str) -> date:
     """ Строку с датой преобразовать в объект datetime. """
     months = {
@@ -140,9 +145,10 @@ def create_date(date_: str) -> date:
         'декабря': '12',
     }
     date_ = re.sub(r'\s{2,}', ' ', date_)
+    date_ = re.sub(r'(\d{2})[-.](\d{2})[-.](\d{4})', r'\1.\2.\3', date_)
+    date_ = remove_spaces_between_numbers(date_)
     date_ = date_.replace(',', '.')
-    pattern = r'\d{2}.\d{2}.\d{2,4}'
-    match = re.search(pattern, date_)
+    match = re.search(r'\d{2}.\d{2}.\d{2,4}', date_)
     if not match:
         date_ = date_.split(' ')
         if len(date_) < 3:
@@ -199,7 +205,8 @@ def create_main_protocol(main_number, main_date, table_data: dict):
         if match_:
             address, code = split_code_and_address(table_data['Место отбора проб'],
                                                    table_data[key])
-            break
+            if address and code:
+                break
 
     main_date = create_date(main_date)
     sampling_date = create_date(table_data['Дата и время отбора проб'])
@@ -345,9 +352,12 @@ def create_all_objects(main_collector: MainCollector) -> ObjectsForDB:
 
     for key, value in main_collector.data_from_tables.items():
         if key[1] == 'MAIN':
+
+
             objects_of_models[key] = create_main_protocol(main_collector.main_number,
                                                           main_collector.main_date,
                                                           value)
+
         else:
             objects_of_models[key] = create_objects_same_cls(value, key[1])
 

@@ -6,6 +6,7 @@ import re
 import docx
 from docx2txt import docx2txt
 
+from conversion.exceptions import NumbDateNotFoundError
 from league_sert.constants import PattNumbAndDateByParts, PattNumbDate, MONTHS
 
 
@@ -42,8 +43,21 @@ def get_numb_date_from_frames(file_path: str):
 
     # Ищем в объединенном текст номер и дату протокола.
     # Сохраняем найденные элементы в словарь.
-    for patt in PattNumbAndDateByParts:
-        match_ = re.search(patt.value, union_text)
+
+    number = re.search(PattNumbAndDateByParts.number.value, union_text)
+    if not number:
+        return None
+
+    result['number'] = number.group()
+    numb_slice = number.start() + 150
+
+    for patt in [
+        PattNumbAndDateByParts.month,
+        PattNumbAndDateByParts.day,
+        PattNumbAndDateByParts.year
+    ]:
+
+        match_ = re.search(patt.value, union_text[:numb_slice])
         if match_:
             result[patt.name] = match_.group()
         else:
@@ -88,7 +102,12 @@ class NumbDateGetter:
 
     def get_from_frames(self):
         """ Найти номер и дату из текста в рамках. """
-        numb_from_frames, date_from_frames = get_numb_date_from_frames(self.file)
+        try:
+            numb_from_frames, date_from_frames = get_numb_date_from_frames(self.file)
+        except Exception as e:
+            print(e)
+            return False
+
         if numb_from_frames and date_from_frames:
             self.main_numb = numb_from_frames
             self.main_date = date_from_frames
@@ -100,9 +119,9 @@ class NumbDateGetter:
 
         if self.main_numb and not self.main_date:
             # Берем промежуток в 150 символов от номера протокола в разные стороны.
-            substring = self.text[self.match_numb.start() - 150:self.match_numb.start() + 150]
+            substring = self.text[self.match_numb.start() - 150:self.match_numb.start() + 500]
             # Ищем день.
-            day = re.search(r'«(\d{2})»', substring).group(1)
+            day = re.search(r'«_*(\d{2})_*»', substring).group(1)
             # Ищем месяц.
             month = None
             for m in MONTHS.keys():
@@ -122,15 +141,16 @@ class NumbDateGetter:
 def get_main_numb_and_date(text: str, file: str) -> tuple:
     """ Найти номер и дату протокола,
     реализует работу класса NumbDateGetter. """
+
+    text = re.sub(r'«[\s_]*И[\s_]*»', "«11»", text)
     getter = NumbDateGetter(text, file)
 
+    # Пытаемся найти номер и дату протокола одним из трех методов.
     if getter.get_from_solid_text():
         return getter.main_numb, getter.main_date
-
     if getter.get_from_frames():
         return getter.main_numb, getter.main_date
-
     if getter.get_date():
         return getter.main_numb, getter.main_date
 
-    raise Exception('Не найдены номер и дата протокола.')
+    raise NumbDateNotFoundError(file)

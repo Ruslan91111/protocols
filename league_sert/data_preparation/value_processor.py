@@ -56,7 +56,7 @@ class ValueProcessor:
     def process_multiplication(self):
         """ Обработать значение для показателей с двумя перемножающимися числами,
         в том числе, со степенью. Вычисляет значение с учетом степени.  """
-        pattern = r'(\d+[,\.]?\d*)\s?([•■*xхХX]+\s?)(\d+)([⁰¹²³⁴⁵⁶⁷⁸⁹]?)'
+        pattern = r'(\d+[,\.]?\d*)\s?([•■*xхХX]+\s?)([\dOО]+)([⁰¹²³⁴⁵⁶⁷⁸⁹]?)'
         match_substr = re.search(pattern, self.value)
         first_digit = match_substr.group(1).replace(',', '.')
         second_digit = match_substr.group(3).replace(',', '.')
@@ -106,19 +106,11 @@ class ValueProcessor:
             processing_method()
 
 
-def to_process_the_value(value: str):
+def to_calculate_the_value(value: str):
     """ Обработать значение и вернуть в преобразованном виде.
     Функция для использования класса ValueProcessor"""
-
-    # Исправить неточности, допущенные при конвертировании файла
-    value = value.strip('.').strip(' ').strip('\t')
-    value = re.sub(r'l', '1', value)
-    value = re.sub('хЮ', 'х10', value)
-    value = re.sub(r'\d+б|б.\d+', '6', value)
-
     # Определить тип необходимых преобразования значения.
     value_type = define_value_type(value, ConvertValueTypes)
-
     # Преобразовать значение и вернуть.
     new_value = ValueProcessor(value, value_type).new_value
     return new_value

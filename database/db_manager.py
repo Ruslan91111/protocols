@@ -31,7 +31,7 @@ from database.db_config_postgres import protocols_engine, prot_session_maker
 from database.base import Base
 
 from league_sert.models.models import *
-from fbu_protocols.models.models import *
+# from fbu_protocols.models.models import *
 
 
 class DBManager:

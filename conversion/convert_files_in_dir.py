@@ -341,6 +341,7 @@ def convert_all_pdf_in_dir_to_word(dir_with_pdf_files: str) -> None:
         for file in files_for_convert:
 
             try:
+
                 # Конвертируем файл.
                 convert_a_file(file, dir_with_pdf_files, dir_for_word_files)
 
@@ -367,4 +368,11 @@ def convert_all_pdf_in_dir_to_word(dir_with_pdf_files: str) -> None:
 
 if __name__ == '__main__':
     dir_path = r'C:\Users\RIMinullin\Desktop\2024'
+    # dir_path = r'C:\Users\RIMinullin\Desktop\Сентябрь-октябрь 2024'
+    # dir_path = (r'C:\Users\RIMinullin\Desktop\Сканы Оригиналы август-сентябрь 2024')
+
     convert_all_pdf_in_dir_to_word(dir_path)
+    # convert_a_file(r'32005 06.02.2024',
+    #                r'C:\Users\RIMinullin\Desktop\2024\unrecorded',
+    #                r'C:\Users\RIMinullin\Desktop\2024\word_files\unrecorded',
+    #                )

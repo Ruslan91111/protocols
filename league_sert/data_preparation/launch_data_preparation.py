@@ -19,26 +19,29 @@ from league_sert.data_preparation.file_parser import MainCollector
 from league_sert.data_preparation.merge_tables import refine_and_merge_tables
 
 
-def extract_and_prepare_data(word_file: str):
+def extract_and_prepare_data(word_file):
     """Запуск кода модуля по изъятию и подготовке данных для записи в БД."""
 
     # Создаем объект собирателя данных из word файла.
     data_collector = MainCollector(word_file)
-
-    # Собираем все данные из word документа.
+    # Собираем все данные из word документа, как отдельные значения, так и таблицы, собираем в словари и списки
     data_collector.collect_all_data()
 
-    # Обработка данных из таблиц word файла.
-    data_collector.data_from_tables = process_the_tables(
-        data_collector.data_from_tables)
+    # Обработка данных из таблиц word файла. Здесь исправляются ошибки, связанные с неправильным
+    # разделением таблиц или добавлением лишних строк, пустых колонок и т.д.
+    data_collector.data_from_tables = process_the_tables(data_collector.data_from_tables)
+
+
+
+
 
     # Добавляем выводы о соответствии результатов исследований нормам.
-    data_collector.data_from_tables = add_conclusions_for_all_tables(
-        data_collector.data_from_tables)
+    data_collector.data_from_tables = add_conclusions_for_all_tables(data_collector.data_from_tables)
 
     # Объединяем таблицы описаний проб и таблицы результатов исследований.
     data_collector.data_from_tables = refine_and_merge_tables(data_collector.data_from_tables)
 
     # Объединяем данные по производственному контролю.
     data_collector.merge_prod_control()
+
     return data_collector

@@ -259,6 +259,7 @@ class CollectorFromTable:
 
         self.value_of_current_table = {}
         for _, row in enumerate(self.current_table.rows):
+
             cells = row.cells
             for _ in cells:
                 key_of_row = cells[0].text.strip()

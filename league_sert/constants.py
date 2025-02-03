@@ -1,7 +1,8 @@
 """ Константы, в основном используемые в нескольких модулях, на разных уровнях. """
 import enum
+import os
 from enum import Enum
-
+from pathlib import Path
 
 FINE_READER_PROCESS = 'FineReader.exe'
 WORD_PROCESS = 'WINWORD.EXE'
@@ -22,6 +23,7 @@ MONTHS = {
     'мая': '05',
     'июня': '06',
     'июля': '07',
+    'толя': '07',
     'августа': '08',
     'сентября': '09',
     'октября': '10',
@@ -49,7 +51,15 @@ class FRScreens(Enum):
     WARNING_AFTER_CONVERT: str = r'./screenshots/warning.png'
     WARNING_IN_PROC: str = r'./screenshots/warning_in_proc.png'
     SHUT_WARNING: str = r'./screenshots/shut_warning.png'
+    SHUT_WARNING_BLUE_FRAME: str = r'./screenshots/shut_warning_blue_frame.png'
     PROCESS_FINISHED: str = r'./screenshots/process_finished.png'
+    ERROR_PAGE_NEED_TO_RM: str = r'./screenshots/error_page_need_to_rm.png'
+
+    @property
+    def absolute_path(self) -> str:
+        """Возвращает абсолютный путь к изображению скриншота."""
+        base_dir = Path(__file__).resolve().parent.parent
+        return str(Path.joinpath(base_dir, 'conversion', self.value))
 
 
 class ComparTypes(Enum):
@@ -60,6 +70,7 @@ class ComparTypes(Enum):
 
     NOT_ALLOWED: str = (r'\b[нпли][ес] допускаю\s*[тг]\s*[се]я|'
                         r'^[“\s]*[-—]\s*$|'
+                        r'^[\•\*]$|'
                         r'^$|'
                         r'[нпл][ес] обнаружено|'
                         r'^о[тг]сутствие$|'
@@ -91,9 +102,9 @@ class ProdControlPatt(Enum):
     START_SUBSTR: str = (r'п\s*о\s*п\s*р\s*о\s*и\s*з\s*в\s*о\s*д\s*с\s*т\s*в\s*е\s*н\s*н\s*о\s*м\s*у\s*'
                          r'к\s*о\s*н\s*т\s*р\s*о\s*л\s*ю\s*')
     DATE: str = r'«\s?(\d{2})\s?»?\s?(\w{3,})\s?(\d{4})'
-    NUMB_AND_DATE_OF_MEASUR = (r'№[’>\s]*Акта и дата проведения измерений[:;]\s*'
-                               r'([\d\w\s,\.]+)\s[гГ][,.]')
-    PLACE_OF_MEASUR = (r'Адрес проведения измерений[:;]\s*([\s\S]+)[\d\s\.]*'
+    NUMB_AND_DATE_OF_MEASUR = (r'Акта [ик] дата проведения измерений[:;]\s*'
+                               r'([\d\w\s,\.\-]+)\s[гГ][,.]')
+    PLACE_OF_MEASUR = (r'Адрес проведения измерени[йи][:;]\s*([\s\S]+)[\d\s\.]*'
                        r'Сведения о средствах измерения')
     START_OF_CONCLUSION = r'ЗАКЛЮЧЕНИЕ'
     INNER_PART_OF_CONCLUSION = r'-\s?на момент.*\n\n'
@@ -101,7 +112,7 @@ class ProdControlPatt(Enum):
 
 
 class WordsPatterns(Enum):
-    NAME = r'[Н]аим[ес]нован\s*[ин][е]'
+    NAME = r'[Н]а[ин]м[ес]нова[ня]\s*[ин][е]'
     INDICATORS = r'Показател[ия]'
     RESULT = r"Р[ес]зул\s*[ьы][тг]*а[тг]\s*"
     REQUIREMENTS = r'Требовани[яи]'
@@ -130,7 +141,7 @@ class PattNumbAndDateByParts(enum.Enum):
     number = r'№?\s?(\d{,6}\s?/\d{2}-Д)'
     month = (r'января|февраля|марта|апреля|мая|июня|'
              r'июля|августа|сентября|октября|ноября|декабря|толя')
-    year = r'\d{2}\s*\d{2}\s*г.'
+    year = r'2\s?0\s*\d{2}\s*г.'
     day = r'«\s?\d{1,2}\s?»'
 
 
@@ -153,9 +164,9 @@ class ConvertValueTypes(Enum):
     NO_MORE: str = r'до \d+,?\d*'  # до 1,5
     WITHIN: str = r'\d+\,?\d*\s?-\s?\d+\,?\d*\b'  # 2,0 - 4,2
     LESS: str = r'менее \d+,?\d*|<\d+,?\d*'  # менее 0,10 <0,001
-    NOT_FOUND: str = r'([нлпи][есо]|tie) обнару(ж|ок)[ес]н[оы]'  # не обнаружено в 25,0 г
+    NOT_FOUND: str = r'([нлпия][есо]|tie) обнару(ж|ок)[ес]н[оы]'  # не обнаружено в 25,0 г
     DIGIT: str = r'\d+,?\d*'  # 9,0
-    NONE: str = r'^\s*[-—]\s*$|^$|^\s*■\s*$|^\s*⁰\s*$|^\s*■-\s*$'  # '-'
+    NONE: str = r'^\s*[-—]\s*$|^$|^\s*■\s*$|^\s*⁰\s*$|^\s*■-\s*$|^[\*•]$'  # '-'
     NO_CHANGE: str = r'о[тг]сутствие изменений|о[тг]сутствие|не изменен'
     NOT_ALLOWED: str = r'[пнли][ес] допускаю\s?[тг]\s*[се]я'
     SMELL_TASTE: str = r'(з\s*а\s*п\s*а\s*х\s*)|(в\s*к\s*у\s*с)'

@@ -1,14 +1,10 @@
 import PyPDF2
 
 
-def remove_pdf_pages(pdf_path: str, pages_to_remove: list, output_path: str):
-    """
-    Удаляет указанные страницы из PDF файла и сохраняет новый файл.
+def remove_pdf_pages(pdf_path: str, pages_to_remove: list):
+    """ Удаляет указанные страницы из PDF файла и сохраняет новый файл. """
+    output_path = pdf_path.replace('.pdf', '_без_страниц.pdf')
 
-    :param pdf_path: Путь к исходному PDF файлу.
-    :param pages_to_remove: Список номеров страниц для удаления (индекс начинается с 0).
-    :param output_path: Путь к новому PDF файлу.
-    """
     # Открытие PDF файла для чтения
     with open(pdf_path, 'rb') as file:
         reader = PyPDF2.PdfReader(file)
@@ -27,6 +23,5 @@ def remove_pdf_pages(pdf_path: str, pages_to_remove: list, output_path: str):
 
 if __name__ == '__main__':
     PATH_PDF = r'C:\Users\RIMinullin\Desktop\2024\77147 31.01.2024.pdf'
-    OUTPUT_PDF = r'C:\Users\RIMinullin\Desktop\2024\77147 31.01.2024_rm.pdf'
 
-    remove_pdf_pages(PATH_PDF, [3,5,7,9], OUTPUT_PDF)
+    remove_pdf_pages(PATH_PDF, [3,5,7,9])

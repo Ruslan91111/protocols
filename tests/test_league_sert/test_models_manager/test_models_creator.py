@@ -47,7 +47,9 @@ def test_split_code_and_address(sampling_place, apllicant_info, expect_address, 
                              ('11 мая 2024', datetime.date(2024, 5, 11)),
                              ('11 мая 2024 г.', datetime.date(2024, 5, 11)),
                              ('11 мая 2024 года', datetime.date(2024, 5, 11)),
-                             ('11  мая   2024 г.', datetime.date(2024, 5, 11))
+                             ('11  мая   2024 г.', datetime.date(2024, 5, 11)),
+                             ('23  сентября   20 24 г.', datetime.date(2024, 9, 23)),
+
                          ])
 def test_create_date(date_, expected_date):
     """ Тестирование создания объекта даты. """

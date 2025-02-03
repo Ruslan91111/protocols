@@ -19,3 +19,13 @@ class TypeIndicatorsError(MyException):
                                'Требуемый тип - словарь'):
         self.message = message
         super().__init__(self.message)
+
+
+class DirDontExistError(MyException):
+    def __init__(self, path):
+        super().__init__(f"Директории по пути {path} не существует.")
+
+
+class NoSamplingSiteError(Exception):
+    def __init__(self):
+        super().__init__('Отсутствует ключ <место отбора проб>')

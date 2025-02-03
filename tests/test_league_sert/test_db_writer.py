@@ -1,7 +1,7 @@
 from datetime import datetime
 
 from league_sert.data_preparation.launch_data_preparation import extract_and_prepare_data
-from league_sert.db_writer import write_objects_to_db
+from league_sert.db_writer import _write_objects_from_file_to_db
 from league_sert.models.models import MainProtocol, ManufProd, Air, Washings, StoreProd, ProdControl
 from league_sert.models.models_creator import create_all_objects
 from tests.test_league_sert.test_data_preparaton.constants import TEST_WORD_FILES
@@ -16,7 +16,7 @@ def test_write_file_to_db(setup_database):
     # Создать объекты для записи в БД.
     objects_for_db = create_all_objects(data_from_file)
     # Записать объекты в БД.
-    write_objects_to_db(objects_for_db, session)
+    _write_objects_from_file_to_db(objects_for_db, session)
 
     # Получаем записанные объекты и проверяем их атрибуты, в том числе и связи на main_prot
     main_prots = session.query(MainProtocol).all()
@@ -73,7 +73,7 @@ def test_write_some_files_to_db(setup_database):
     for file in TEST_WORD_FILES[:3]:
         data_from_file = extract_and_prepare_data(file)
         objects_for_db = create_all_objects(data_from_file)
-        write_objects_to_db(objects_for_db, session)
+        _write_objects_from_file_to_db(objects_for_db, session)
 
     # Получаем и проверяем количество объектов записанных в БД.
     main_prots = session.query(MainProtocol).all()

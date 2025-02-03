@@ -4,7 +4,7 @@ import pytest
 from league_sert.constants import ComparTypes, ConvertValueTypes
 from league_sert.data_preparation.exceptions import DetermineValueTypeError
 from league_sert.data_preparation.value_processor import (define_value_type,
-                                                          to_process_the_value)
+                                                          to_calculate_the_value)
 
 PLUS: str = r'\d\s?[+±]\s?\d'  # 16,34±0,15;  +
 MULTIPLICATION: str = r'\d\s?[•■]\s?\d'  # 1 ■ 101², 1 • 10²
@@ -70,21 +70,24 @@ def test_define_value_type_raises_error_convert_value_types():
 
 
 @pytest.mark.parametrize(
-    'value, expected_value', [('не изменен<10', 10.0),
-                              ('не обнаружено в 1 г (см³)', 0),
-                              ('не более 11 клеток в 1 г (см³)', 11.0),
-                              ('не более 3,0x10⁴', 30000.0),
-                              ('не обнаружено в 25 г', 0),
-                              ('менее 1,0x10¹', 10.0),
-                              ('не более 10', 10.0),
-                              ('менее 1,0x10*', 10.0),
-                              ('3,2±0,4', [3.2, 3.6]),
-                              ('2,0-4,2', [2.0, 4.2]),
-                              ('2,3±0,4', [2.3, 2.6999999999999997]),
-                              ('-', 0),
-                              ('не более 5,0х10⁶', 5000000.0),
-                              ('3,5х10²', 350.0)])
-def test_to_process_the_value(value, expected_value):
+    'value, expected_value', [
+        ('не изменен<10', 10.0),
+        ('не обнаружено в 1 г (см³)', 0),
+        ('не более 11 клеток в 1 г (см³)', 11.0),
+        ('не более 3,0x10⁴', 30000.0),
+        ('не обнаружено в 25 г', 0),
+        ('менее 1,0x10¹', 10.0),
+        ('не более 10', 10.0),
+        ('менее 1,0x10*', 10.0),
+        ('3,2±0,4', [3.2, 3.6]),
+        ('2,0-4,2', [2.0, 4.2]),
+        ('2,3±0,4', [2.3, 2.6999999999999997]),
+        ('-', 0),
+        ('не более 5,0х10⁶', 5000000.0),
+        ('3,5х10²', 350.0),
+        ('не менее 1.0x10⁷', 10000000.0)
+    ])
+def test_to_calculate_the_value(value, expected_value):
     """ Проверка преобразования значения. """
-    result_value = to_process_the_value(value)
+    result_value = to_calculate_the_value(value)
     assert result_value == expected_value
