@@ -47,10 +47,15 @@ class Comparator:
         """ Сравнение, когда нормы определены в виде нижнего
          и верхнего допустимого значения. """
         if isinstance(self.result, list):
-            self.conclusion = (self.norm[0] < self.result[0] <= self.norm[1],
-                               self.norm[0] < self.result[1] <= self.norm[1])
+            self.conclusion = (self.norm[0] <= self.result[0] <= self.norm[1],
+                               self.norm[0] <= self.result[1] <= self.norm[1])
         else:
             self.conclusion = self.norm[0] < self.result <= self.norm[1]
+
+
+
+
+
 
     def compare_up_to(self):
         """ Сравнение, когда нормы определены в виде
@@ -63,7 +68,22 @@ class Comparator:
     def compare_not_allowed(self):
         """ Сравнение, когда нормы определены в виде
         'не допускаются'. """
-        self.conclusion = True if self.result == 0 or self.result == 0.01 else False
+
+        # Если в результате 0.
+        if self.result == 0:
+            self.conclusion = True
+
+        # Если результат != 0
+        elif not isinstance(self.result, list):
+            # 0.2 - допустимое отклонение.
+            self.conclusion = True if self.result <= 0.02 else False
+
+        # Если в результат был плюс, минус.
+        elif isinstance(self.result, list):
+            main_digit = True if self.result[0] <= 0.2 else False
+            dev_digit = True if self.result[1] <= 0.2 else False
+            self.conclusion = main_digit, dev_digit
+
 
     def compare_at_least(self):
         """ Сравнение, когда нормы определены в виде

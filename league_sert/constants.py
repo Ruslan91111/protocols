@@ -76,7 +76,8 @@ class ComparTypes(Enum):
                         r'^о[тг]сутствие$|'
                         r'^\s*[■-]*\s*$')
 
-    AT_LEAST: str = r'\bне менее \d+\,?\d*\s?'  # не менее 9,0
+    AT_LEAST: str = r'\bне\s*менее\b'  # не менее 9,0
+    # AT_LEAST: str = r'\bне менее \d+\,?\d*\s?'  # не менее 9,0
     NO_MORE: str = r'\bне более\b'  # не более 220,0
     DIGIT: str = r'\d+,?\d*'  # 220
     NO_CHANGE: str = r'о[тг]сутствие изменений'
@@ -164,6 +165,7 @@ class ConvertValueTypes(Enum):
     NO_MORE: str = r'до \d+,?\d*'  # до 1,5
     WITHIN: str = r'\d+\,?\d*\s?-\s?\d+\,?\d*\b'  # 2,0 - 4,2
     LESS: str = r'менее \d+,?\d*|<\d+,?\d*'  # менее 0,10 <0,001
+    AT_LEAST: str = r'\bне\s*менее\b'  # менее 0,10 <0,001
     NOT_FOUND: str = r'([нлпия][есо]|tie) обнару(ж|ок)[ес]н[оы]'  # не обнаружено в 25,0 г
     DIGIT: str = r'\d+,?\d*'  # 9,0
     NONE: str = r'^\s*[-—]\s*$|^$|^\s*■\s*$|^\s*⁰\s*$|^\s*■-\s*$|^[\*•]$'  # '-'
