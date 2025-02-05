@@ -214,10 +214,11 @@ examp_path2 = (r'C:\Users\RIMinullin\Desktop\2024')
 
 if __name__ == '__main__':
 
+    # x = extract_and_prepare_data(examp_path1 + '\\' +'word_files\\32006 08.08.2024.docx')
 
     start = time.time()
     # write_files_to_db_from_dir_debug(examp_path1)
-    # write_files_to_db_from_dir(examp_path1)
+    write_files_to_db_from_dir(examp_path1)
     # write_files_to_db_from_dir(examp_path2)
 
     write_files_to_db_from_dir_debug(examp_path1)

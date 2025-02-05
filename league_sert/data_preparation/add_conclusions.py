@@ -28,7 +28,7 @@ from comparator.comparator import create_conformity_conclusion
 from league_sert.constants import WordsPatterns as words, WRONG_PARTS_IN_ROW, TypesOfTable
 from league_sert.data_preparation.exceptions import TypeOfIndicatorTableError, NoneConformityError
 from league_sert.data_preparation.file_parser import check_wrong_parts_in_row
-from league_sert.data_preparation.fix_the_values import process_value
+from league_sert.data_preparation.fix_the_values import fix_spelling_errors
 
 NAME = words.NAME.value
 INDICATORS = words.INDICATORS.value
@@ -238,9 +238,10 @@ class ConclusionCreator:
 
     def make_conformity(self):
         """ Сделать выводы о соответствии показателей и норм. """
+
         # Исправить ряд орфографических ошибок.
-        self.row_values['result'] = process_value(self.row_values['result'])
-        self.row_values['norm'] = process_value(self.row_values['norm'])
+        self.row_values['result'] = fix_spelling_errors(self.row_values['result'])
+        self.row_values['norm'] = fix_spelling_errors(self.row_values['norm'])
 
         self.conformity: bool | tuple[bool] = create_conformity_conclusion(
             self.row_values['result'], self.row_values['norm'])

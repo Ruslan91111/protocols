@@ -196,7 +196,7 @@ def fix_keys(data: dict, keys: dict) -> dict:
     return new_data
 
 
-def create_main_protocol(main_number, main_date, table_data: dict):
+def create_main_protocol(main_number, main_date, table_data: dict, mode=''):
     """ Создать объект модели MainProtocol.  """
     table_data = fix_keys(table_data, FIX_KEYS_MAIN_PROT)
 
