@@ -1,6 +1,10 @@
-""" Уменьшить размер pdf файла. """
-import time
+"""
+Уменьшить размер pdf файла.
 
+Пример использования:
+    compress_pdf(input_pdf_path, output_pdf_path)
+
+"""
 import fitz  # PyMuPDF
 from PIL import Image
 import io
@@ -40,18 +44,3 @@ def compress_pdf(input_pdf_path, output_pdf_path, image_quality=80):
     new_doc.save(output_pdf_path)
     new_doc.close()
     doc.close()
-
-
-# Пример использования
-if __name__ == '__main__':
-    start = time.time()
-
-    input_pdf_path = r'C:\Users\RIMinullin\Desktop\на сжатие.pdf'
-    output_pdf_path = r"C:\Users\RIMinullin\Desktop\сжатый.pdf"
-    compress_pdf(input_pdf_path, output_pdf_path)
-    input_pdf_path = r'C:\Users\RIMinullin\Desktop\на сжатие2.pdf'
-    output_pdf_path = r"C:\Users\RIMinullin\Desktop\сжатый2.pdf"
-    compress_pdf(input_pdf_path, output_pdf_path)
-
-    elapsed_time = time.time() - start
-    print(f"{elapsed_time:.3f}")

@@ -30,6 +30,7 @@ from league_sert.data_preparation.exceptions import TypeOfIndicatorTableError, N
 from league_sert.data_preparation.file_parser import check_wrong_parts_in_row
 from league_sert.data_preparation.fix_the_values import fix_spelling_errors
 
+
 NAME = words.NAME.value
 INDICATORS = words.INDICATORS.value
 RESULT = words.RESULT.value
@@ -265,7 +266,7 @@ class ConclusionCreator:
             self.determine_params()
             pattern = r'Примечание.\s*Результаты'
             if re.search(pattern, self.row_values['name']):
-                del (self.table[numb])
+                del self.table[numb]
                 continue
 
             self.make_conformity()

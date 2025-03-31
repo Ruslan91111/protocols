@@ -1,16 +1,18 @@
 """ Константы, в основном используемые в нескольких модулях, на разных уровнях. """
 import enum
-import os
+import re
+import sys
 from enum import Enum
 from pathlib import Path
+
+BASE_DIR = Path(__file__).resolve().parent.parent
+if BASE_DIR not in sys.path:
+    sys.path.insert(0, str(BASE_DIR))
 
 FINE_READER_PROCESS = 'FineReader.exe'
 WORD_PROCESS = 'WINWORD.EXE'
 
 CODE_PATTERN = r'[\s№(]*[^в/ч]\s?\b(\d{5})\b[\s),]|^(\d{5})\b[.,]'
-
-# Старый
-# CODE_PATTERN = r'[\s№(]\s?(\d{5})[\s),]|^(\d{5})[.,]'
 
 DIGITS_IN_DEGREE = {'⁰': 0, '¹': 1, '²': 2, '³': 3, '⁴': 4,
                     '⁵': 5, '⁶': 6, '⁷': 7, '⁸': 8, '⁹': 9}
@@ -30,6 +32,67 @@ MONTHS = {
     'ноября': '11',
     'декабря': '12',
 }
+
+FIX_KEYS_MAIN_PROT = {
+    'Заявитель': re.compile(
+        r'З\s*а\s*я\s*в\s*и?\s*[тг]\s*е\s*л\s*ь',
+        flags=re.IGNORECASE
+    ),
+
+    'Место отбора проб': re.compile(
+        (r"м\s*[ео]\s*[се]\s*[тiг1]\s*[оoае0]\s*?\s*"
+         r"[оoае0]\s*[тг1]\s*б\s*о\s*р\s*а\s*?\s*"
+         r"п\s*р\s*о\s*б"),
+        flags=re.IGNORECASE
+    ),
+
+    'Дата и время отбора проб': re.compile(
+        (r'а\s?[тчгш]\s?а?\s'
+         r'([изпн]|тт)*\s*в\s?р\s?е\s?м\s?я\s'
+         r'о\s?[тгi(]\s?б\s?о\s?р\s?а\s'
+         r'п\s?р\s?о\s?б\s?|Дша и время отбора проб'),
+        flags=re.IGNORECASE
+    )
+}
+
+FIX_KEYS_SAMPLE = {
+    'Производитель (фирма, предприятие, организация)': re.compile(
+        (r'\(фирма,|р\s?о\s?и\s?[зэч]\s?[вн]\s?о\s?[дл]\s?и\s?[тг]\s?[еcс]*'
+         r'\s?[ля]\s?[ь1][\s>]*\(ф\s*и\s*р\s*м\s*а\s*[,.]*'
+         r'\s*п\s*р\s*е\s*д\s*п\s*р\s*и\s*я\s*т\s*и\s*е\s*'),
+        flags=re.IGNORECASE
+    ),
+
+    'Шифр пробы': re.compile(r'(Ш|Н1|1Н)ифр [п]робы',
+                             flags=re.IGNORECASE),
+
+    'Наименование продукции': re.compile(
+        (r'а[ип]\.*м[есc][нп]ова[нп]и[есc]|'
+         r'(?:\s*[Н1]*[\)]?\s*и\s*м[\s\w>]*|'
+         r'[кЕ]шм[се][нп]ова[нп]ие\s*)\s*'
+         r'[пи]\s*р\s*о\s*д\s*у\s*к\s*ц\s*и\s*и\s*'),
+        flags=re.IGNORECASE
+    ),
+
+    'Дата производства продукции': re.compile(
+        (r'[дл]\s*а\s*[тгз>]?\s*а\s*п\s*р\s*о\s*и\s*з\s*'
+         r'в\s*о\s*д\s*с\s*т\s*в\s*а\s*[пи]\s*р\s*о\s*д\s*у\s*к\s*ц\s*и\s*и'),
+        flags=re.IGNORECASE
+    ),
+
+    'Группа продукции': re.compile(
+        r'\s*[рp]\s*[уиv]\s*[пшиnнh]\s*[пнn]*\s*[аa]\s*п\s*р\s*о\s*[дл]\s*у\s*к\s*ц\s*и\s*и',
+        flags=re.IGNORECASE),
+
+    'Объект исследования': re.compile(
+        (r'(\(\)|о)\s*[б&]\s*([ъьзвт])*\s*[\,\.]*\s*[ес]'
+         r'\s*[ксвю][\w\s!]*с\s*с\s*л\s*е\s*д\s*о\s*в\s*а\s*н\s*и\s*[йия]\s*'),
+        flags=re.IGNORECASE)
+}
+
+FIX_KEYS_OBJECT_MERGE = {'air': r'В\s*о\s*з\s*д\s*у\s*х',
+                         'washings': r'С\s*м\s*ы\s*в\s*ы',
+                         'water': r'В\s*о\s*д\s*а', }
 
 
 class FRScreens(Enum):
@@ -54,6 +117,8 @@ class FRScreens(Enum):
     SHUT_WARNING_BLUE_FRAME: str = r'./screenshots/shut_warning_blue_frame.png'
     PROCESS_FINISHED: str = r'./screenshots/process_finished.png'
     ERROR_PAGE_NEED_TO_RM: str = r'./screenshots/error_page_need_to_rm.png'
+    FOR_WORD_DIR: str = r'./screenshots/for_word_dir.png'
+    CHOICE_DIR: str = r'./screenshots/choice_dir.png'
 
     @property
     def absolute_path(self) -> str:
@@ -77,7 +142,6 @@ class ComparTypes(Enum):
                         r'^\s*[■-]*\s*$')
 
     AT_LEAST: str = r'\bне\s*менее\b'  # не менее 9,0
-    # AT_LEAST: str = r'\bне менее \d+\,?\d*\s?'  # не менее 9,0
     NO_MORE: str = r'\bне более\b'  # не более 220,0
     DIGIT: str = r'\d+,?\d*'  # 220
     NO_CHANGE: str = r'о[тг]сутствие изменений'
@@ -100,8 +164,9 @@ class MsgForUser(Enum):
 class ProdControlPatt(Enum):
     """ Паттерны для извлечения данных, относящихся к измерениям
     производственного контроля. """
-    START_SUBSTR: str = (r'п\s*о\s*п\s*р\s*о\s*и\s*з\s*в\s*о\s*д\s*с\s*т\s*в\s*е\s*н\s*н\s*о\s*м\s*у\s*'
-                         r'к\s*о\s*н\s*т\s*р\s*о\s*л\s*ю\s*')
+    START_SUBSTR: str = (
+        r'п\s*о\s*п\s*р\s*о\s*и\s*з\s*в\s*о\s*д\s*с\s*т\s*в\s*е\s*н\s*н\s*о\s*м\s*у\s*'
+        r'к\s*о\s*н\s*т\s*р\s*о\s*л\s*ю\s*')
     DATE: str = r'«\s?(\d{2})\s?»?\s?(\w{3,})\s?(\d{4})'
     NUMB_AND_DATE_OF_MEASUR = (r'Акта [ик] дата проведения измерений[:;]\s*'
                                r'([\d\w\s,\.\-]+)\s[гГ][,.]')
@@ -123,19 +188,23 @@ class WordsPatterns(Enum):
     PARAMETER = r"Измеряемый параметр"
     UNITS = r"Единицы"
     OBJECT_WASHINGS = r"(Об[ъз]\.?ект см[ыь])"
-    SAMPLE_CODE = r'Шифр пробы'
+    SAMPLE_CODE = '(111|Ш)ифр пробы'
 
 
 class TypesOfTable(enum.Enum):
     """ Паттерны для определения типа таблицы. """
-    MAIN: str = r'Заяви?\s*[тг]ель'
+
+    MAIN: str = r'З\s*а\s*я\s*в\s*и?\s*[тг]\s*е\s*л\s*ь'
+
     MEASURING: str = r'аим[ес]нова[нк]и[ес] ср[ео]дс[гт]\s*ва\s+изм'
+
     SAMPLE: str = WordsPatterns.SAMPLE_CODE.value
+
     PROD_CONTROL: str = (f'({WordsPatterns.PLACE_OF_MEASUREMENT.value}|'
                          f'{WordsPatterns.PARAMETER.value})')
+
     RESULTS: str = (f'({WordsPatterns.INDICATORS.value}|{WordsPatterns.NAME.value})|'
                     f'{WordsPatterns.SAMPLING_SITE.value}|{WordsPatterns.OBJECT_WASHINGS.value}')
-    # RESULTS: str = r'(Показатели|Наименован\s*[ин][е])|Место отбора пробы|Объект см[ыь]'
 
 
 class PattNumbAndDateByParts(enum.Enum):
@@ -151,7 +220,7 @@ class PattNumbDate(Enum):
     SUBSTRING_START: str = \
         r'П\s?р\s?о\s?т\s?о\s?к\s?о\s?л\s+и\s?с\s?п\s?ы\s?т\s?а\s?н\s?и\s?й'
     NUMBER: str = r'№?\s?(\d{,6}\s?/\d{2}-Д)'
-    DATE: str = (r'«(\d{2})»\s*(января|февраля|марта|апреля|'
+    DATE: str = (r'«(\d{2}|II)»\s*(января|февраля|марта|апреля|'
                  r'мая|июня|июля|августа|сентября|октября|ноября|декабря)'
                  r'\s*(\d{2}\s*\d{2})')
 
@@ -171,14 +240,14 @@ class ConvertValueTypes(Enum):
     NONE: str = r'^\s*[-—]\s*$|^$|^\s*■\s*$|^\s*⁰\s*$|^\s*■-\s*$|^[\*•]$'  # '-'
     NO_CHANGE: str = r'о[тг]сутствие изменений|о[тг]сутствие|не изменен'
     NOT_ALLOWED: str = r'[пнли][ес] допускаю\s?[тг]\s*[се]я'
-    SMELL_TASTE: str = r'(з\s*а\s*п\s*а\s*х\s*)|(в\s*к\s*у\s*с)'
+    SMELL_TASTE: str = r'(з\s*а\s*[пн]\s*а\s*х\s*)|(в\s*к\s*у\s*с)'
 
 
 WRONG_PARTS_IN_ROW = [
     'Физико-химические показатели',
     'Жир[ни]ок[ип]слот[пни]ый состав',
     'Микробиологические (показатели|исследования)',
-    'От\s*ветственный за оформление',
+    r'От\s*ветственный за оформление',
     'Аверкова',
     '[пХ]одпись',
     'Токсичные элементы, мг/кг:',
@@ -189,7 +258,6 @@ WRONG_PARTS_IN_ROW = [
     'Прибор комбинированный',
     'Д[ао][нч]ная пр[оея]'
 ]
-
 
 WRONG_FIRST_CELLS_IN_TAB = [
     'Физико-химические показатели',
@@ -213,16 +281,28 @@ class TableWords(Enum):
 
 
 TABLE_WORDS_PATTERN = (r"[Н]аим[ес]нован\s*[ин][е]|"
-                 r"Показател|"
-                 r"Требовани|"
-                 r"измерений|"
-                 r"Место|"
-                 r"Измеряемый|"
-                 r"параметр|"
-                 r"Единицы|"
-                 r"Шифр|"
-                 r"допускаю|"
-                 r"обнаружено|"
-                 r"сутствие$|"
-                 r"запах|"
-                 r"вкус")
+                       r"Показател|"
+                       r"Требовани|"
+                       r"измерений|"
+                       r"Место|"
+                       r"Измеряемый|"
+                       r"параметр|"
+                       r"Единицы|"
+                       r"Шифр|"
+                       r"допускаю|"
+                       r"обнаружено|"
+                       r"сутствие$|"
+                       r"запах|"
+                       r"вкус")
+
+TABLE_TYPES_IN_RUS = {
+    'store_prod': 'Продукция магазина',
+    'manuf_prod': 'Продукция производителя',
+    'air': 'Воздух',
+    'water': 'Вода',
+    'PROD_CONTROL': 'Производственный контроль',
+    'MAIN': 'Основная таблица',
+    'main_protocol': 'Основная таблица',
+}
+
+RECORDED_FILE = BASE_DIR / r'.\league_sert\db_operations\viewed.txt'

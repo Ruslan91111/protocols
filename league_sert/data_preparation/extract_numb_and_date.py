@@ -143,6 +143,8 @@ def get_main_numb_and_date(text: str, file: str) -> tuple:
     реализует работу класса NumbDateGetter. """
 
     text = re.sub(r'«[\s_]*И[\s_]*»', "«11»", text)
+    text = re.sub(r'«[\s_]*II[\s_]*»', "«11»", text)
+    text = re.sub(r'«[\s_]*!![\s_]*»', "«11»", text)
     getter = NumbDateGetter(text, file)
 
     # Пытаемся найти номер и дату протокола одним из трех методов.

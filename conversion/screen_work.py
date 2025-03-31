@@ -136,9 +136,13 @@ def click_convert_main_menu() -> None:
     click_scr(FRScreens.CONVERT_TO_WORD_MAIN_MENU.absolute_path)
 
 
-def input_filename(file_path):
+def press_enter():
+    pyautogui.press('enter')
+
+
+def input_filename(file_path, screen=FRScreens.INPUT_FIELD_FILE_NAME.absolute_path):
     """ Ввести название файла в поле приложения. """
-    wait_scr(FRScreens.INPUT_FIELD_FILE_NAME.absolute_path)
+    wait_scr(screen)
     time.sleep(0.5)
     pyautogui.hotkey('ctrl', 'a')
     pyautogui.press('backspace')
@@ -146,7 +150,7 @@ def input_filename(file_path):
     time.sleep(0.5)
     pyautogui.hotkey('ctrl', 'v')
     time.sleep(0.5)
-    pyautogui.press('enter')
+    press_enter()
 
 
 def is_in_convert_to_word_section():

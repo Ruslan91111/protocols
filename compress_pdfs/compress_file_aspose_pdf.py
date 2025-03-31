@@ -7,13 +7,12 @@ import os
 from pathlib import Path
 
 import aspose.pdf as ap
-import time
 
 
-def compress_file_aspose(input_pdf: str | Path,
-                         output_pdf: str | Path,
-                         image_quality: int = 50,
-                         dpi: int = 120):
+def compress_file_with_aspose(input_pdf: str | Path,
+                              output_pdf: str | Path,
+                              image_quality: int = 50,
+                              dpi: int = 120):
     """
     Сжать pdf файл.
 
@@ -55,13 +54,3 @@ def compress_file_aspose(input_pdf: str | Path,
 
     # Сохранить сжатый PDF
     input_pdf.save(output_pdf)
-
-
-# Пример использования:
-if __name__ == '__main__':
-    start = time.time()
-    input_pdf_path = r'C:\Users\RIMinullin\Desktop\на сжатие3.pdf'
-    output_pdf_path = r"C:\Users\RIMinullin\Desktop\сжатый3.pdf"
-    compress_file_aspose(input_pdf_path, output_pdf_path, image_quality=50, dpi=120)
-    elapsed_time = time.time() - start
-    print(f"{elapsed_time:.3f}")

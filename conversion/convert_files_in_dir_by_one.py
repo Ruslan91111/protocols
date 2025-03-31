@@ -236,9 +236,12 @@ class WordChecker:
         try:
             substr_start = re.search(ProdControlPatt.START_SUBSTR.value, self.text).start()
             prod_control_text = self.text[substr_start:]
-            self.prod_contr_numb = re.search(PattNumbDate.NUMBER.value, prod_control_text).group(1)
+            self.prod_contr_numb = re.search(PattNumbDate.NUMBER.value,
+                                             prod_control_text).group(1)
             match = re.search(ProdControlPatt.DATE.value, prod_control_text)
-            self.prod_contr_date = match.group(1) + ' ' + match.group(2) + ' ' + match.group(3)
+            self.prod_contr_date = (match.group(1) + ' ' +
+                                    match.group(2) + ' ' +
+                                    match.group(3))
 
         except Exception as e:
             print(e)
@@ -308,7 +311,7 @@ def move_not_renamed_file(file, dir_with_word_files, dir_with_pdf_files):
     shutil.move(original_path, destination_path)
 
 
-def convert_all_pdf_in_dir_to_word(dir_with_pdf_files: str) -> None:
+def convert_all_pdf_in_dir_to_word_by_one(dir_with_pdf_files: str) -> None:
     """ Получить от пользователя путь к директории с PDF файлами создать директорию,
     в которую будут сохранены файлы в формате word после конвертации. """
 
@@ -366,13 +369,43 @@ def convert_all_pdf_in_dir_to_word(dir_with_pdf_files: str) -> None:
                     click_scr(FRScreens.SHUT_WARNING.value)
 
 
-if __name__ == '__main__':
-    dir_path = r'C:\Users\RIMinullin\Desktop\2024'
-    # dir_path = r'C:\Users\RIMinullin\Desktop\Сентябрь-октябрь 2024'
-    # dir_path = (r'C:\Users\RIMinullin\Desktop\Сканы Оригиналы август-сентябрь 2024')
+def convert_all_pdf_in_dir_to_word_in_one_list(dir_with_pdf_files: str) -> None:
+    """ Получить от пользователя путь к директории с PDF файлами создать директорию,
+    в которую будут сохранены файлы в формате word после конвертации. """
 
-    convert_all_pdf_in_dir_to_word(dir_path)
-    # convert_a_file(r'32005 06.02.2024',
-    #                r'C:\Users\RIMinullin\Desktop\2024\unrecorded',
-    #                r'C:\Users\RIMinullin\Desktop\2024\word_files\unrecorded',
-    #                )
+    # Директория для Word файлов.
+    dir_for_word_files = return_or_create_dir(dir_with_pdf_files + '\\word_files\\')
+    # Переменная для файлов, нуждающихся в конвертации.
+    files_for_convert = True
+
+    # Пока есть файлы для конвертации.
+    while files_for_convert:
+
+        # Перечень файлов, которые еще не конвертированы.
+        files_for_convert = fetch_files_for_conversion(
+            dir_with_pdf_files, dir_for_word_files)
+
+        if not files_for_convert:
+            print("Отсутствуют файлы для конвертации.")
+            break
+
+        # Запустить FineReader.
+        launch_desktop_app(
+            FINE_READER_PROCESS, FRScreens.PANEL_ICON.value,
+            FRScreens.DESKTOP_ICON.value, 0.8)
+        # Ждем загрузки приложения FineReader.
+        wait_fr_app_loading()
+        # Проверяем, что находимся в нужном разделе приложения.
+        is_in_convert_to_word_section()
+
+        files_paths = [os.path.join(dir_with_pdf_files, file) for file in files_for_convert]
+
+        # Перебираем файлы в перечне файлов, нуждающихся в конвертации.
+        for file in files_for_convert:
+            pass
+
+            try:
+                # Конвертируем файл.
+                convert_a_file(file, dir_with_pdf_files, dir_for_word_files)
+            except Exception as e:
+                print(e)

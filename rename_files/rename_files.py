@@ -42,8 +42,9 @@ def get_main_date(file_path: str) -> str | bool:
     except Exception as e:
         print(f'rename_files,43,{e}')
         # Проверяем, не гарантийное ли это письмо.
-        re.search(r'гарантийное письмо', word_checker.text, re.IGNORECASE)
-        return 'guarantee'
+        guarant = re.search(r'гарантийное письмо', word_checker.text, re.IGNORECASE)
+        if guarant:
+            return 'guarantee'
     if word_checker.main_date:
         return word_checker.main_date
     return False

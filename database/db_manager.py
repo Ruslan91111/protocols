@@ -13,25 +13,8 @@
             - drop_the_table
             - get_table_contents
 
-    Пример использования:
-        if __name__ == '__main__':
-            db_manager = DBManager(Base, protocols_engine)
-            db_manager.method()
-
 """
-import sys
-from pathlib import Path
 from sqlalchemy import MetaData, Table, select
-
-BASE_DIR = Path(__file__).resolve().parent.parent
-if BASE_DIR not in sys.path:
-    sys.path.insert(0, str(BASE_DIR))
-
-from database.db_config_postgres import protocols_engine, prot_session_maker
-from database.base import Base
-
-from league_sert.models.models import *
-# from fbu_protocols.models.models import *
 
 
 class DBManager:
@@ -57,9 +40,14 @@ class DBManager:
         return self.session()
 
     def get_all_tables(self):
-        """Вернуть все таблицы и поля, находящиеся в БД."""
+        """Вернуть все таблицы, находящиеся в БД."""
         self.metadata.reflect(bind=self.engine)
-        return self.metadata.tables
+
+        tables = [
+            table_name for table_name in self.metadata.tables.keys()
+            if not table_name.startswith(('pg_', 'sql_', 'information_schema', 'alembic_version'))
+        ]
+        return tables
 
     def drop_the_table(self, table_name):
         """Удалить таблицу из БД."""
@@ -86,9 +74,3 @@ class DBManager:
                     print(row)
             else:
                 print(f"Таблица '{table_name}' пуста или не существует.")
-
-
-if __name__ == '__main__':
-    db_worker = DBManager(Base, protocols_engine, prot_session_maker)
-    db_worker.drop_all_tables()
-    db_worker.create_all_tables()

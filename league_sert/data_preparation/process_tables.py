@@ -27,9 +27,24 @@ def process_the_tables(tables: dict):
     tables = rm_invalid_cols_and_rows_from_tabs(tables)
     # Разделить ошибочно соединенные таблицы.
     tables = divide_the_table(tables)
+
+    tables = remove_one_raw_table(tables)
     # Объединить ошибочно разделенные таблицы.
     tables = merge_results_table(tables)
     return tables
+
+
+def remove_one_raw_table(tables_: dict):
+    """ Удалить таблицу из одной пустой строки. """
+    new_tables = {}
+    for tab_key, tab_val in tables_.items():
+
+        if tab_key[1] == 'SAMPLE' and isinstance(tab_val, dict) and list(tab_val.keys()) == ['']:
+            pass
+        else:
+            new_tables[tab_key] = tab_val
+
+    return new_tables
 
 
 def merge_results_table(tables: dict) -> dict:

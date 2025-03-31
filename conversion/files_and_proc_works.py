@@ -123,15 +123,10 @@ def fetch_files_for_conversion(path_to_dir_pdf: str, path_to_dir_word: str) -> s
     """Вернуть множеством файлы, которые нужно конвертировать."""
     pdf_files = {i for i in os.listdir(path_to_dir_pdf) if i[-4:] == '.pdf' and
                  i[-9:-4] != 'stamp' and i[-8:-4] != 'temp'}
-
     pdf_files = {i[:-4] for i in pdf_files}
-
     word_files = {i for i in os.listdir(path_to_dir_word) if i[-5:] == '.docx'}
-
     word_files = {i[:-5] for i in word_files}
-
     set_files_required_to_convert = pdf_files.difference(word_files)
-
     return set_files_required_to_convert
 
 
@@ -146,6 +141,32 @@ def is_specific_word_window_open(target_title: str):
         if window.title == target_title:
             return True
     return False
+
+
+def close_specific_word_windows(target_title: str):
+    # Получаем все окна с заголовком, содержащим "Word"
+    target_title = target_title[:target_title.rfind('.')] + ' - Word'
+    word_windows = gw.getWindowsWithTitle('Word')
+
+    # Проверяем, есть ли окно с заголовком target_title.
+    for window in word_windows:
+        print(window.title)
+        print(target_title)
+        if window.title == target_title:
+            window.close()
+
+
+def close_specific_pdf_windows(target_title: str):
+    target_title = target_title.replace('.docx', '.pdf') + ' - Adobe Acrobat Reader (64-bit)'
+    # Получаем все окна с заголовком, содержащим "Word"
+    pdf_windows = gw.getWindowsWithTitle('pdf')
+
+    # Проверяем, есть ли окно с заголовком target_title.
+    for window in pdf_windows:
+        print(window.title)
+        print(target_title)
+        if window.title == target_title:
+            window.close()
 
 
 def is_file_in_dir(dir_, file):

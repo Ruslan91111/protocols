@@ -26,7 +26,8 @@
 """
 import re
 
-from league_sert.models.models_creator import fix_keys
+from league_sert.constants import FIX_KEYS_OBJECT_MERGE, TABLE_TYPES_IN_RUS
+from league_sert.manual_entry.exceptions import MissedTableError
 
 Tables = dict[tuple[int, str]: dict[str]]
 
@@ -64,52 +65,70 @@ def remove_results_table(tables: Tables) -> Tables:
     return tables
 
 
-FIX_KEYS_MANUF_PROD = {'Группа продукции':
-                           (r'г\s*р\s*у\s*п\s*п\s*а\s*п\s*р\s*о\s*д\s*у\s*к\s*ц\s*и\s*и\s*'),
-                       'Объект исследования':
-                           (r'о\s*б\s*ъ\s*е\s*к\s*т\s*и\s*с\s*с\s*л\s*е\s*д\s*о\s*в\s*а\s*н\s*и\s*й\s*')}
-
-FIX_KEYS_OBJECT = {'air': r'В\s*о\s*з\s*д\s*у\s*х',
-                   'washings': r'С\s*м\s*ы\s*в\s*ы',
-                   'water': r'В\s*о\s*д\s*а',}
-
-
 def determine_names_of_tables(tables: Tables) -> Tables:
     """ Определить тип таблицы исходя из ее содержимого.
     Под типом понимается к какой модели она относится.
     Тип таблицы - сохраняется в строке, под вторым индексом в ключе. """
 
+    # Переменная для итоговых данных по таблицам.
     result = {}
 
+    # Перебираем таблицы. Ключи по типу (1, 'SAMPLE')
     for key, value in tables.items():
 
-        if key[1] in {'MAIN', 'PROD_CONTROL'}:
+        # Если таблица с основными данными, просто сохраняем в результат.
+        if key[1] == 'MAIN':
             result[key] = value
             continue
 
-        value = fix_keys(value, FIX_KEYS_MANUF_PROD)
-
-        manuf_prod = value.get('Группа продукции', False)
-        if manuf_prod == 'Продукция производителя':
-            result[(key[0], 'manuf_prod')] = value
+        # Если таблица с данными по производственному контролю.
+        if key[1] == 'PROD_CONTROL':
+            # Сохраняем в результат данные из таблицы.
+            result[key] = value
+            # Если ключ с производственным контролем последний, то прервать цикл.
+            if key == list(tables.items())[-1]:
+                break
+            # Продолжить цикл, если таблица с производственным контролем не последняя в документе.
             continue
 
-        if manuf_prod == 'Производство магазина':
-            result[(key[0], 'store_prod')] = value
-            continue
+        # Для остальных таблиц, не относящихся к основным данным
+        # и данным по производственному контролю.
 
-        object_of_test = value.get('Объект исследования', False)
-        if not object_of_test:
-            object_of_test = value.get('Объект исследований', False)
+        # Ищем в таблице ключ 'Группа продукции'. Такой ключ в таблицах
+        # 'Производство магазина' и 'производство изготовителя'.
+        production = value.get('Группа продукции', None)
+
+        # Определяем это 'Производство магазина' или 'производство изготовителя'
+        if production:
+            manuf_pattern = r'п\s*р\s*о\s*и\s*з\s*в\s*о\s*д\s*и\s*[тг]\s*е\s*л\s*я'
+            if re.search(manuf_pattern, production):
+                result[(key[0], 'manuf_prod')] = value
+                continue
+            store_pattern = r'м\s*а\s*г\s*а\s*з\s*и\s*н\s*а'
+            if re.search(store_pattern, production):
+                result[(key[0], 'store_prod')] = value
+                continue
+
+        # Ищем в таблице ключ 'Объект исследования'. Такой ключ в таблицах
+        # 'Смывы', 'Вода', 'Воздух'.
+
+        object_of_test = value.get('Объект исследования', None)
 
         if object_of_test:
-
             object_of_test = object_of_test.replace(',', '', ).replace(' ', '')
 
-            for k, v in FIX_KEYS_OBJECT.items():
+            # Пытаемся понять - это таблица с водой, смывами, воздухом и т.д.
+            for k, v in FIX_KEYS_OBJECT_MERGE.items():
+                # Сохраняем в результат.
                 if re.search(v, object_of_test, re.IGNORECASE):
                     result[(key[0], k)] = value
                     break
+            continue
+
+        raise MissedTableError(key[0], TABLE_TYPES_IN_RUS[list(result.keys())[-1][1]])
+
+    if len(tables) != len(result):
+        raise Exception('Упущена таблица в модуле merge_tables.')
 
     return result
 

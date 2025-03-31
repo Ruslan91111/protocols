@@ -4,7 +4,6 @@
 
 """
 import sys
-import time
 import os
 import multiprocessing
 from pathlib import Path
@@ -93,10 +92,11 @@ def process_and_write_file_task(file, word_dir):
         session.close()
         return file, None
     except Exception as e:
+        print(e)
         return None, file
 
 
-def write_files_to_db_from_dir(dir_path, db_url, num_processes=4):
+def write_files_to_db_from_dir(dir_path, db_url=PROTOCOLS_DB, num_processes=4):
     """Обработать и записать в БД все файлы, находящиеся в передаваемой директории,
     используя многопроцессорность."""
 
@@ -142,6 +142,7 @@ def write_files_to_db_from_dir(dir_path, db_url, num_processes=4):
                     if recorded_file:
                         recorded.add(recorded_file)
                     if not_recorded_file:
+                        move_unrecorded_files(not_recorded_file, word_dir)
                         not_recorded.append(not_recorded_file)
                 except Exception as e:
                     print(f"Ошибка в процессе: {e}")
@@ -157,23 +158,3 @@ def write_files_to_db_from_dir(dir_path, db_url, num_processes=4):
     print(f'В Базу Данных записано {len(recorded)} файлов.')
     print(f'Не записано {len(not_recorded)} файлов. '
           f'Файлы перемещены в директорию {os.path.join(word_dir, "unrecorded")}')
-
-
-examp_path1 = (r'C:\Users\RIMinullin\Desktop\ППК 2025 — большие переименованные')
-examp_path2 = (r'C:\Users\RIMinullin\Desktop\август-октябрь все')
-# examp_path2 = (r'C:\Users\RIMinullin\Desktop\2024')
-
-if __name__ == '__main__':
-
-    # x = (examp_path1 + '\\' +'word_files\\50331 07.10.2024.docx')
-    try:
-        start = time.time()
-        write_files_to_db_from_dir(examp_path1, PROTOCOLS_DB)
-        write_files_to_db_from_dir(examp_path2, PROTOCOLS_DB)
-
-        print(time.time() - start)
-
-    except Exception as e:
-
-        print(e)
-        print(time.time() - start)

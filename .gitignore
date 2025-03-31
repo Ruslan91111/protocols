@@ -37,4 +37,7 @@ build/
 
 # файлы
 *.docx
+*.html
+*.txt
 *.database
+league_sert/db_operations/viewed.txt

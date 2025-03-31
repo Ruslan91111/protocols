@@ -34,9 +34,11 @@ from pathlib import Path
 from typing import Dict, Tuple, Union, List
 from datetime import datetime, date
 
+from league_sert.constants import MONTHS, TABLE_TYPES_IN_RUS
 from league_sert.data_preparation.exceptions import AddressNotFoundError
 from league_sert.data_preparation.file_parser import MainCollector
 from league_sert.exceptions import TypeIndicatorsError
+from league_sert.manual_entry.exceptions import MissedKeyCreateInstError
 from league_sert.models.exceptions import AttrNotFoundError
 
 BASE_DIR = Path(__file__).resolve().parent.parent.parent
@@ -45,40 +47,6 @@ if BASE_DIR not in sys.path:
 
 from league_sert.models.models import (MainProtocol, ManufProd, Air, Water,
                                        ProdControl, Washings, StoreProd)
-
-FIX_KEYS_MAIN_PROT = {'Место отбора проб':
-                          (r"м\s*[ео]\s*[се]\s*[тiг1]\s*[оoае0]\s*?\s*"
-                           r"[оoае0]\s*[тг1]\s*б\s*о\s*р\s*а\s*?\s*"
-                           r"п\s*р\s*о\s*б"),
-
-                      'Дата и время отбора проб':
-                          (r'а\s?[тчгш]\s?а?\s'
-                           r'([изпн]|тт)*\s*в\s?р\s?е\s?м\s?я\s'
-                           r'о\s?[тгi(]\s?б\s?о\s?р\s?а\s'
-                           r'п\s?р\s?о\s?б\s?|Дша и время отбора проб'),
-                      'Заявитель': r'Заяви?\s*[тг]ель',
-                      }
-
-FIX_KEYS_MANUF_PROD = {'Производитель (фирма, предприятие, организация)':
-                           (r'\(фирма,|р\s?о\s?и\s?[зэч]\s?[вн]\s?о\s?[дл]\s?и\s?[тг]\s?[еcс]*'
-                            r'\s?[ля]\s?[ь1][\s>]*\(ф\s*и\s*р\s*м\s*а\s*[,.]*'
-                            r'\s*п\s*р\s*е\s*д\s*п\s*р\s*и\s*я\s*т\s*и\s*е\s*'),
-
-                       'Шифр пробы': r'.*Шифр пробы',
-
-                       'Наименование продукции':
-                           ('а[ип]\.*м[есc][нп]ова[нп]и[есc]|'
-                            '(?:\s*[Н1]*[\)]?\s*и\s*м[\s\w>]*|'
-                            '[кЕ]шм[се][нп]ова[нп]ие\s*)\s*'
-
-                            '[пи]\s*р\s*о\s*д\s*у\s*к\s*ц\s*и\s*и\s*'),
-
-                       'Дата производства продукции':
-                           (r'[дл]\s*а\s*[тз]\s*а\s*п\s*р\s*о\s*и\s*з\s*'
-                            r'в\s*о\s*д\s*с\s*т\s*в\s*а\s*п\s*р\s*о\s*д\s*у\s*к\s*ц\s*и\s*и'),
-                       }
-
-FIX_KEYS_AIR_WATER = {'Шифр пробы': r'.*Шифр [п]робы', }
 
 
 def create_common_violations(table_data: dict) -> List[bool]:
@@ -129,21 +97,7 @@ def remove_spaces_between_numbers(s):
 
 def create_date(date_: str) -> date:
     """ Строку с датой преобразовать в объект datetime. """
-    months = {
-        'января': '1',
-        'февраля': '2',
-        'марта': '3',
-        'апреля': '4',
-        'мая': '5',
-        'июня': '6',
-        'июля': '7',
-        'толя': '7',
-        'августа': '8',
-        'сентября': '9',
-        'октября': '10',
-        'ноября': '11',
-        'декабря': '12',
-    }
+
     date_ = re.sub(r'\s{2,}', ' ', date_)
     date_ = re.sub(r'(\d{2})[-.](\d{2})[-.](\d{4})', r'\1.\2.\3', date_)
     date_ = remove_spaces_between_numbers(date_)
@@ -153,7 +107,7 @@ def create_date(date_: str) -> date:
         date_ = date_.split(' ')
         if len(date_) < 3:
             raise ValueError('Некорректный формат даты.')
-        date_[1] = months[date_[1]]
+        date_[1] = MONTHS[date_[1]]
         date_ = '.'.join(date_[:3])
     else:
         date_ = match.group()
@@ -191,17 +145,31 @@ def fix_keys(data: dict, keys: dict) -> dict:
             match_ = re.search(patt_wrong_key, data_key, re.IGNORECASE)
             if match_:
                 new_data[right_key] = data[data_key]
-                # del new_data[data_key]
 
     return new_data
 
 
-def create_main_protocol(main_number, main_date, table_data: dict, mode=''):
+def create_instance(func):
+    def wrapper(*args, **kwargs):
+        try:
+            result = func(*args, **kwargs)
+            return result
+
+        except KeyError as err:
+            cls_inst = str(func.__name__).strip('create_')
+            in_rus = TABLE_TYPES_IN_RUS[cls_inst]
+            key_ = str(err)
+            raise MissedKeyCreateInstError(in_rus, key_)
+
+    return wrapper
+
+
+@create_instance
+def create_main_protocol(main_number, main_date, table_data: dict):
     """ Создать объект модели MainProtocol.  """
-    table_data = fix_keys(table_data, FIX_KEYS_MAIN_PROT)
 
     for key in table_data.keys():
-        match_ = re.search('Заяви?тель', key)
+        match_ = re.search(r'З\s*а\s*я\s*в\s*и\s*т\s*е\s*л\s*ь', key)
         if match_:
             address, code = split_code_and_address(table_data['Место отбора проб'],
                                                    table_data[key])
@@ -223,6 +191,7 @@ def create_main_protocol(main_number, main_date, table_data: dict, mode=''):
         store_address=address)
 
 
+@create_instance
 def create_prod_control(**kwargs):
     """ Создать объект модели ProdControl.  """
     return ProdControl(
@@ -241,9 +210,9 @@ def create_prod_control(**kwargs):
         unit=kwargs['unit'])
 
 
+@create_instance
 def create_manuf_prod(**kwargs):
     """ Создать объект модели ManufProd.  """
-    kwargs = fix_keys(kwargs, FIX_KEYS_MANUF_PROD)
 
     return ManufProd(
         sample_code=kwargs['Шифр пробы'],
@@ -259,10 +228,9 @@ def create_manuf_prod(**kwargs):
         norm_doc=kwargs['norm_doc'])
 
 
+@create_instance
 def create_store_prod(**kwargs):
     """ Создать объект модели ManufProd.  """
-    kwargs = fix_keys(kwargs, FIX_KEYS_MANUF_PROD)
-
     return StoreProd(
         sample_code=kwargs['Шифр пробы'],
         prod_name=kwargs['Наименование продукции'],
@@ -276,10 +244,10 @@ def create_store_prod(**kwargs):
         norm_doc=kwargs['norm_doc'])
 
 
+@create_instance
 def create_air(**kwargs):
     """ Создать объект модели Air. """
     validate_attribute(Air, kwargs['name_indic'], 'name_indic')
-    kwargs = fix_keys(kwargs, FIX_KEYS_AIR_WATER)
     return Air(
         sample_code=kwargs['Шифр пробы'],
         name_indic=kwargs['Объект исследования'],
@@ -291,12 +259,11 @@ def create_air(**kwargs):
         norm_doc=kwargs['norm'])
 
 
+@create_instance
 def create_water(**kwargs):
     """ Создать объект модели Water.  """
-    kwargs = fix_keys(kwargs, FIX_KEYS_AIR_WATER)
-
     return Water(
-        test_object=kwargs['Объект исследований'],
+        test_object=kwargs['Объект исследования'],
         sample_code=kwargs['Шифр пробы'],
         name_indic=kwargs['name_indic'],
         result=kwargs['result'],
@@ -306,6 +273,7 @@ def create_water(**kwargs):
         norm_doc=kwargs['norm_doc'])
 
 
+@create_instance
 def create_washings(**kwargs):
     """ Создать объект модели washings.  """
     return Washings(
@@ -352,12 +320,9 @@ def create_all_objects(main_collector: MainCollector) -> ObjectsForDB:
 
     for key, value in main_collector.data_from_tables.items():
         if key[1] == 'MAIN':
-
-
             objects_of_models[key] = create_main_protocol(main_collector.main_number,
                                                           main_collector.main_date,
                                                           value)
-
         else:
             objects_of_models[key] = create_objects_same_cls(value, key[1])
 
