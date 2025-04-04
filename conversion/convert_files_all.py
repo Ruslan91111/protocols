@@ -18,7 +18,7 @@ from conversion.screen_work import (
     is_in_convert_to_word_section,
     uncheck_open_doc,
     click_convert_blue_button,
-    check_save_image
+    check_save_image, pick_all_files
 )
 
 
@@ -48,6 +48,7 @@ def fetch_all_files_to_convert(path_to_dir_pdf: str,
 
 def check_all_files_converted(dir_, expected_files) -> None:
     """ Проверить все ли файлы, конвертированы. """
+
     time.sleep(2)
     start = time.perf_counter()
     while True:
@@ -81,13 +82,14 @@ def convert_all_pdf_in_dir_to_docx(dir_with_pdf_files: str) -> None:
     is_in_convert_to_word_section()  # Проверяем, что находимся в нужном разделе приложения.
     click_convert_main_menu()
     input_filename(dir_with_pdf_files)  # Ввести директории с ПДФ файлами.
-    # Получить и ввести наименования всех файлов ПДФ, нуждающихся в конвертации
-    files_in_str = fetch_all_files_to_convert(dir_with_pdf_files, dir_for_word_files)
-    input_filename(files_in_str)
+    pick_all_files()  # Выбрать все файлы для конвертации.
+
     check_save_image()  # Флажок сохранить картинки.
-    click_convert_blue_button()
-    uncheck_open_doc()
+    click_convert_blue_button()  # Кликнуть кнопку <Конвертировать в Word>
+    uncheck_open_doc()  # Снять галочку с открыть документ по окончании конвертации.
+
     # Ввести путь к директории с .docx файлами
     input_filename(dir_for_word_files, screen=FRScreens.FOR_WORD_DIR.absolute_path)
     click_scr(FRScreens.CHOICE_DIR.absolute_path)
+
     check_all_files_converted(dir_for_word_files, files_for_convert)

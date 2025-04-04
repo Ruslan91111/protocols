@@ -8,7 +8,7 @@ from pathlib import Path
 from league_sert.constants import RECORDED_FILE
 
 
-def read_viewed_from_file(file: str = RECORDED_FILE):
+def read_viewed_from_file(file: str = RECORDED_FILE) -> set:
     """Прочитать номера просмотренных документов из файла."""
     if not os.path.isfile(file):
         with open(file, 'w', encoding='utf-8') as file:

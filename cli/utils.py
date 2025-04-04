@@ -2,11 +2,13 @@ import os
 
 
 def divider():
-    print('==' * 80)
+    """ Просто вывести разделитель в виде множества знаков = """
     print('==' * 80)
 
 
 def get_dir_from_user():
+    """ Получить от пользователя путь до директории. """
+
     while True:
         divider()
         path_from_user = input('Введите полный путь до директории с файлами, затем нажмите <Enter>\n'
@@ -21,6 +23,8 @@ def get_dir_from_user():
 
 
 def get_file_from_user():
+    """ Получить от пользователя путь до файла. """
+
     while True:
         divider()
         path_from_user = input('Введите полный путь до файла, затем нажмите <Enter>. '

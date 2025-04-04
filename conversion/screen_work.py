@@ -140,6 +140,22 @@ def press_enter():
     pyautogui.press('enter')
 
 
+def pick_all_files(screen=FRScreens.INPUT_FIELD_FILE_NAME.absolute_path):
+    """ Ввести название файла в поле приложения. """
+    scr = wait_scr(screen)
+    time.sleep(0.5)
+
+    new_x = scr[0] + 50
+    new_y = scr[1] - 40
+
+    time.sleep(0.5)
+    pyautogui.click(new_x, new_y)
+
+    pyautogui.hotkey('ctrl', 'a')
+    time.sleep(0.5)
+    press_enter()
+
+
 def input_filename(file_path, screen=FRScreens.INPUT_FIELD_FILE_NAME.absolute_path):
     """ Ввести название файла в поле приложения. """
     wait_scr(screen)

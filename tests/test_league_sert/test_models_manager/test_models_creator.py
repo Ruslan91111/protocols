@@ -3,7 +3,7 @@ import datetime
 
 import pytest
 
-from league_sert.models.models_creator import split_code_and_address, create_date, create_manuf_prod
+from league_sert.models.models_creator import split_code_and_address, create_date, create_manuf_prod, fix_keys
 
 
 @pytest.mark.parametrize('sampling_place, apllicant_info, expect_address, expect_code', [
@@ -56,3 +56,9 @@ def test_create_date(date_, expected_date):
     received_date = create_date(date_)
     assert isinstance(received_date, datetime.date)
     assert received_date == expected_date
+
+
+# @pytest.mark.parametrize('table_data, expected_key')
+# def test_fix_keys(table_data, ):
+#     result = fix_keys(table_data, keys)
+#     assert

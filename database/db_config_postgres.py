@@ -22,7 +22,7 @@ DB_NAME = os.getenv('DB_NAME')  # имя базы данных
 PROTOCOLS_DB = f'postgresql://{DB_USER}:{DB_PASSWORD}@{DB_HOST}:{DB_PORT}/{DB_NAME}'
 
 # Создание подключения к базе данных
-protocols_engine = create_engine(PROTOCOLS_DB, echo=True)
+protocols_engine = create_engine(PROTOCOLS_DB, echo=False)
 
 # Фабрика сеансов, настроенная для управления транзакциями с использованием базы данных
 prot_session_maker = sessionmaker(autocommit=False, autoflush=False, bind=protocols_engine)

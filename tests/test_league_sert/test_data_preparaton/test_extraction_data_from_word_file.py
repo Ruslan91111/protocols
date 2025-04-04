@@ -20,6 +20,8 @@ def test_collect_data(file, expected_collector):
     data_collector = MainCollector(file)
     data_collector.collect_all_data()
     expected_collector = expected_collector()
+    print(data_collector.main_date)
+    print(expected_collector)
     assert data_collector.main_number == expected_collector.main_number
     assert data_collector.main_date == expected_collector.main_date
     assert data_collector.prod_control_data == expected_collector.prod_control_data

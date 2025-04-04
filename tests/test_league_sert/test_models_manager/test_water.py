@@ -8,7 +8,7 @@ from league_sert.models.models_creator import create_water
 def test_data():
     """ Вернуть тестовые данные. """
     return {'name_indic': 'Общее микробное число, КОЕ/см³, (ОМЧ)', 'Шифр пробы': '2890-1',
-            'Объект исследований': 'Вода питьевая. Комната принятия пищи',
+            'Объект исследования': 'Вода питьевая. Комната принятия пищи',
             'Условия доставки': 'Автотранспорт, сумка-холодильник', 'Температура при доставке проб': '+4°С',
             'Нарушения при доставке проб': 'Упаковка не нарушена', 'Упаковка': 'Стерильные стеклянные бутыли',
             'Масса пробы': '0,5л*4',
@@ -22,7 +22,7 @@ def test_create_main_protocol(test_data):
     """ Протестировать создание модели основных данных. """
     object_of_model = create_water(**test_data)
     assert isinstance(object_of_model, Water)
-    assert object_of_model.test_object == test_data['Объект исследований']
+    assert object_of_model.test_object == test_data['Объект исследования']
     assert object_of_model.sample_code == test_data['Шифр пробы']
     assert object_of_model.name_indic == test_data['name_indic']
     assert object_of_model.result == test_data['result']

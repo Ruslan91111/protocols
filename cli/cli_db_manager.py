@@ -1,8 +1,14 @@
 import os
+import sys
+from pathlib import Path
 
 from dotenv import load_dotenv
+BASE_DIR = Path(__file__).resolve().parent.parent
+print(BASE_DIR)
+if BASE_DIR not in sys.path:
+    sys.path.insert(0, str(BASE_DIR))
 
-from cli.utils import divider
+from utils import divider
 from database.base import Base
 from database.db_config_postgres import protocols_engine, prot_session_maker
 from database.db_manager import DBManager

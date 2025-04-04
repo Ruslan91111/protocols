@@ -1,6 +1,6 @@
 import pytest
 
-from conversion.rename_files import get_store_code, search_code
+from rename_files.rename_files import get_store_code, search_code
 from tests.test_league_sert.test_data_preparaton.constants import TEST_WORD_FILES
 
 
