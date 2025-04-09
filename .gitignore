@@ -41,3 +41,5 @@ build/
 *.txt
 *.database
 league_sert/db_operations/viewed.txt
+/working.py
+/poetry.lock

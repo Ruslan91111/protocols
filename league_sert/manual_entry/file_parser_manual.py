@@ -1,55 +1,23 @@
 """
-Модуль для парсинга word файл.
 
-Код модуля обрабатывает word файл и получает из него нужные данные,
-подлежащие передаче для дальнейшей работе по преобразованию и сравнению.
-Необходимые данные становятся свойствами объекта класса MainDataGetter.
-Содержит классы и методы, направленные на извлечение данных.
-
-Класс:
-    - MainCollector:
-        Верхне-уровневый класс для сбора данных.
-
-    - CollectorFromTable:
-        Класс для получения информации из таблиц word файла.
-
-
-Функции:
-    - prepare_for_work_with_tables:
-        Подготовить word файл для работы с таблицами - преобразовать в нужный формат.
-
-    - find_out_type_of_table:
-        Определить тип таблицы по содержанию первой строки, сопоставив с паттернами.
-
-    - get_one_string_from_file:
-        Прочитать word файл, вернуть одну большую строку.
-
-    - get_main_information:
-        Найти и вернуть номер и дату протокола.
-
-    - collect_prod_control_data:
-        Найти и вернуть данные, относящиеся к измерениям производственного контроля
-
-Пример использования:
-    data_getter = MainCollector(FILE)
-    data_getter.collect_all_data() - собрать все данные
-    data_getter.main_number - атрибут
-    data_getter.main_date - атрибут
-    data_getter.data_from_tables - атрибут
-    data_getter.prod_control_data - атрибут
 
 """
 import re
+import subprocess
+from pathlib import Path
 
 from docx import Document
 from docx.table import Table
 from docx2txt import docx2txt
 
+from conversion.exceptions import NumbDateNotFoundError
+from conversion.files_and_proc_utils import close_specific_pdf_windows
 from league_sert.constants import (PattNumbDate, ProdControlPatt, TypesOfTable,
                                    WRONG_PARTS_IN_ROW, ConvertValueTypes,
                                    TABLE_WORDS_PATTERN)
 from league_sert.data_preparation.exceptions import TypeOfTableError
 from league_sert.data_preparation.extract_numb_and_date import get_main_numb_and_date
+from league_sert.manual_entry.manual_handlers_exceptions import get_main_number_and_date_handler
 
 
 def check_wrong_parts_in_row(one_row: str, wrong_items) -> bool:
@@ -96,7 +64,7 @@ def check_table_only_symbols(table_: Table):
             solid_text += cell_.text
 
     matches = re.search(TABLE_WORDS_PATTERN, solid_text, re.IGNORECASE)
-    return bool(matches)
+    return True if matches else False
 
 
 def find_out_table_type(first_row_cells: list, table_: Table) -> str | None:
@@ -114,10 +82,8 @@ def find_out_table_type(first_row_cells: list, table_: Table) -> str | None:
 
     # Перебираем паттерны таблиц и сравниваем с содержимым первой строки
     for pattern in TypesOfTable:
-
         if re.search(pattern.value, cells_text, re.IGNORECASE):
             return pattern.name  # Тип таблицы
-
         if re.search(r'Данная проба по исследованным ', cells_text, re.IGNORECASE):
             return None
 
@@ -191,8 +157,8 @@ def _replace_to_6_in_text(match):
     digit = match.group(1)  # Получаем цифру, если она есть
     if digit:  # Если цифра найдена
         return f"«{digit}6»"
-    # Если цифра не найдена просто возвращаем 6
-    return "«6»"
+    else:  # Если цифра не найдена
+        return "«6»"  # Просто возвращаем 6
 
 
 def collect_prod_control_data(text) -> dict:
@@ -217,9 +183,7 @@ def collect_prod_control_data(text) -> dict:
 
         # Ищем дату протокола
         match_date = re.search(ProdControlPatt.DATE.value, text)
-        date_of_protocol = (match_date.group(1) + ' ' +
-                            match_date.group(2) + ' ' +
-                            match_date.group(3))
+        date_of_protocol = (match_date.group(1) + ' ' + match_date.group(2) + ' ' + match_date.group(3))
 
         # Ищем дату измерений.
         match = re.search(ProdControlPatt.NUMB_AND_DATE_OF_MEASUR.value, text)
@@ -256,47 +220,10 @@ class CollectorFromTable:
         self.key_of_current_table: str
         self.value_of_current_table: list | dict
 
-    def process_two_columns_divided_three_cols_by_mistake(self):
-        """ Обработать таблицу в случае если таблица из двух колонок
-        была разделена на три по ошибке, соединить ошибочно разделенную колонку. """
-        self.value_of_current_table = {}
-        for _, row in enumerate(self.current_table.rows):
-
-            cells = row.cells
-            for _ in cells:
-
-                if len(cells) > 2 and cells[2].text.strip().strip('.') != '':
-                    key_of_row_1cell = cells[0].text.strip()
-                    key_of_row_1cell = re.sub(r'11(\w+)', r'Н\1', key_of_row_1cell)
-                    key_of_row_1cell = key_of_row_1cell.strip('.').strip()
-
-                    key_of_row_2cell = cells[1].text.strip()
-                    key_of_row_2cell = re.sub(r'11(\w+)', r'Н\1', key_of_row_2cell)
-                    key_of_row_2cell = key_of_row_2cell.strip('.').strip()
-
-                    key = key_of_row_1cell + key_of_row_2cell
-                    value_of_row = cells[2].text.strip()
-                    self.value_of_current_table[key] = value_of_row
-
-                else:
-                    key = cells[0].text.strip()
-                    value_of_row = cells[1].text.strip()
-                    self.value_of_current_table[key] = value_of_row
-
-        self.converted_data_from_tables[self.key_of_current_table] = self.value_of_current_table
-
-    def check_two_or_three_cols(self):
-        """ Проверить из скольких колонок состоит таблица и в зависимости
-        от количества колонок выбрать тот или иной метод."""
-        if len(self.current_table.rows[0].cells) == 2:
-            self.process_two_columns_table()
-
-        elif len(self.current_table.rows[0].cells) > 2:
-            self.process_two_columns_divided_three_cols_by_mistake()
-
     def process_two_columns_table(self):
         """ Преобразовать таблицу, состоящую из двух колонок в словарь,
          где ключ значение из первой колонки, а значение из второй колонки."""
+
         self.value_of_current_table = {}
         for _, row in enumerate(self.current_table.rows):
 
@@ -364,7 +291,6 @@ class CollectorFromTable:
 
             # Определить тип таблицы.
             type_of_table = find_out_table_type(first_row_cells, self.current_table)
-
             # Строку выше засунуть в блок, если вылезла ошибка, то
 
             if type_of_table is None:
@@ -376,13 +302,12 @@ class CollectorFromTable:
             # Выбрать метод обработки данных в таблице в зависимости
             # от типа таблицы количества колонок.
             if type_of_table in {TypesOfTable.MAIN.name, TypesOfTable.SAMPLE.name}:
-                self.check_two_or_three_cols()
-
+                self.process_two_columns_table()
             if type_of_table in {TypesOfTable.RESULTS.name, TypesOfTable.PROD_CONTROL.name}:
                 self.process_more_then_two_cols()
 
 
-class MainCollector:
+class MainCollectorManual:
     """ Верхне-уровневый класс для получения данных из файла. """
 
     def __init__(self, file_path):
@@ -414,8 +339,22 @@ class MainCollector:
 
     def get_main_information(self):
         """ Получить основные данные из файла. """
-        if not self.main_number or not self.main_date:
-            self.main_number, self.main_date = get_main_numb_and_date(self.get_string(), self.file)
+        try:
+            if not self.main_number or not self.main_date:
+                self.main_number, self.main_date = get_main_numb_and_date(self.get_string(), self.file)
+
+        except (AttributeError, TypeError, NumbDateNotFoundError):  # Убрать первые две ошибки.
+            from league_sert.manual_entry.db_writer_debug import acrobat_path
+
+            unrecorded_pdf_dir = Path(self.file).parent.parent.parent
+            word_path_str = str(self.file)
+            pdf_file_name = word_path_str[word_path_str.rfind('\\')+1:].replace('.docx', '.pdf')
+            pdf_file = Path(unrecorded_pdf_dir, 'unrecorded', pdf_file_name)
+            process_pdf = subprocess.Popen([acrobat_path, '/N', str(pdf_file)], shell=True)
+
+            self.main_number, self.main_date = get_main_number_and_date_handler()
+            if process_pdf:  # Check if process was successfully started
+                close_specific_pdf_windows(pdf_file_name)
 
     def get_prod_control_data(self):
         """ Получить из файла данные о производственном контроле. """

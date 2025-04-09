@@ -34,8 +34,10 @@ from league_sert.data_preparation.value_processor import (to_calculate_the_value
 
 
 class Comparator:
-    """ Класс для сравнения результатов исследования с нормами.
-    если показатель соответствует норме, то self.conclusion = True. """
+    """
+    Класс для сравнения результатов исследования с нормами.
+    Если показатель соответствует норме, то self.conclusion = True.
+    """
 
     def __init__(self, result: str, norm: str):
         self.comparison_type = define_value_type(norm, ComparTypes)
@@ -51,11 +53,6 @@ class Comparator:
                                self.norm[0] <= self.result[1] <= self.norm[1])
         else:
             self.conclusion = self.norm[0] < self.result <= self.norm[1]
-
-
-
-
-
 
     def compare_up_to(self):
         """ Сравнение, когда нормы определены в виде
@@ -83,7 +80,6 @@ class Comparator:
             main_digit = True if self.result[0] <= 0.2 else False
             dev_digit = True if self.result[1] <= 0.2 else False
             self.conclusion = main_digit, dev_digit
-
 
     def compare_at_least(self):
         """ Сравнение, когда нормы определены в виде

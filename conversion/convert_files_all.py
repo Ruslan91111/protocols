@@ -1,12 +1,18 @@
 """
 Конвертировать все файлы ПДФ в .docx с помощью FineReader.
+Работа с приложением осуществляется через кликер на pyautogui.
+Выбирает все файлы за один раз и передает на конвертацию.
+
+Пример использования:
+    - convert_all_pdf_in_dir_to_docx(директория с ПДФ файлами)
+
 """
 import os
 import time
 
 from league_sert.constants import FRScreens, FINE_READER_PROCESS
 
-from conversion.files_and_proc_works import (
+from conversion.files_and_proc_utils import (
     return_or_create_dir, fetch_files_for_conversion)
 
 from conversion.screen_work import (

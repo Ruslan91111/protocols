@@ -1,10 +1,13 @@
+"""
+CLI для взаимодействия с БД. При работе с БД необходимо ввести пароль.
+"""
 import os
 import sys
 from pathlib import Path
 
 from dotenv import load_dotenv
 BASE_DIR = Path(__file__).resolve().parent.parent
-print(BASE_DIR)
+
 if BASE_DIR not in sys.path:
     sys.path.insert(0, str(BASE_DIR))
 

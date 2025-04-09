@@ -65,7 +65,7 @@ from conversion.exceptions import (ScreenshotNotFoundError,
 
 from conversion.remove_back_elements import rm_stamps_from_pdf
 
-from conversion.files_and_proc_works import (return_or_create_dir,
+from conversion.files_and_proc_utils import (return_or_create_dir,
                                              fetch_files_for_conversion,
                                              is_file_in_dir)
 

@@ -34,7 +34,7 @@ import pyperclip
 
 from league_sert.constants import FRScreens
 from conversion.exceptions import ScreenshotNotFoundError
-from conversion.files_and_proc_works import change_keyboard_layout_on_english, hide_the_windows
+from conversion.files_and_proc_utils import change_keyboard_layout_on_english, hide_the_windows
 
 
 def get_absolute_scr_path(filename: str) -> str:

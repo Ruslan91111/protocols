@@ -8,11 +8,11 @@ from pathlib import Path
 
 import aspose.pdf as ap
 
-from conversion.files_and_proc_works import return_or_create_dir
+from conversion.files_and_proc_utils import return_or_create_dir
 from league_sert.db_operations.file_utils import read_viewed_from_file
 
 
-COMPRESSED_FILES = r'.\compressed_files.txt'
+COMPRESSED_FILES = r'.\compress_pdfs\compressed_files.txt'
 
 
 def compress_file_with_aspose(input_pdf: str | Path,

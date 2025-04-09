@@ -17,7 +17,7 @@ from docx import Document
 
 from conversion.exceptions import DateNotFoundError, NoDirWithWordFilesError, StoreCodeError
 from league_sert.constants import MONTHS, CODE_PATTERN
-from conversion.convert_files_in_dir import WordChecker, move_unconverted_file, move_not_renamed_file
+from conversion.convert_files_in_dir_by_one import WordChecker, move_unconverted_file, move_not_renamed_file
 
 
 def check_word_files_dir(path_to_dir: str) -> str:
@@ -212,7 +212,3 @@ def rename_the_files_in_dir(dir_with_pdf_files: str) -> None:
     print('Выполнение программы по переименованию завершено.\n'
           'Все не переименованные файлы находятся в директориях <not renamed>\n'
           'в директориях с pdf файлами и word файлами.')
-
-
-if __name__ == '__main__':
-    rename_the_files_in_dir(r'C:\Users\RIMinullin\Desktop\для_пробы')
