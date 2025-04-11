@@ -29,7 +29,7 @@ def extract_and_prepare_data(word_file):
     # связанные с неправильным разделением таблиц или добавлением лишних строк, колонок и т.д.
     data_collector.data_from_tables = process_the_tables(data_collector.data_from_tables)
 
-    # Здесь теоритически пытаемся исправить все ключи с ошибками.
+    # Здесь пытаемся исправить все ключи с ошибками.
     data_collector.data_from_tables = (
         fix_the_keys_in_all_tables(data_collector.data_from_tables))
 

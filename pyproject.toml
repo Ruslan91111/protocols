@@ -41,6 +41,7 @@ oracledb = "^2.4.1"
 python-dotenv = "^1.0.1"
 pymorphy2 = "^0.9.1"
 aspose-pdf = "^25.1.0"
+beautifulsoup4 = "^4.13.3"
 
 
 [build-system]

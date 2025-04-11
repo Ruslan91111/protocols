@@ -1,13 +1,15 @@
 """
+Изъятие данных из word файла с ФБУ протоколом.
 """
-import json
+import os
 import re
 from enum import Enum
 
-from docx import Document
+from docx import Document, table
 import docx2txt
 
-from fbu_comparison_results_and_norms import compare_result_and_norms, CompareResultAndNorms
+from comparator.comparator import create_conformity_conclusion
+from league_sert.data_preparation.file_parser import get_text_with_superscripts
 
 # Множество для хранения заголовков таблицы, для пропуска при высчитывании соответствия нормам.
 KEYS_IN_INDICATORS_FOR_PASS = {'Гигиенические требования безопасности',
@@ -34,153 +36,131 @@ REQUIRED_KEYS_FOR_PARSING_FIRST_PAGE = (
 
 class FbuPatternsForKeys(Enum):
     """ Паттерны для изъятия данных с протоколов ФБУ."""
-    number_and_date: str = r'(\bпротокол\b[\s\w]+№)([\s\d-]*)от([\w\.\s]*\d{4})'
-    accompanying_documents: str = r'(\bсопроводительный\b[\w\s]+:\s*)([\w\.\s№-]+.\d{4})'
-    name_of_test_sample: str = r'(Наименование образца испытаний[\*\:]*)([\w%\s\.]+)(Изготовитель)'
+    number_date: str = r'(протокол испытаний\s+№)([\s\d-]*от\s\d{2}.\d{2}.\d{4})'
+    accompl_doc: str = r'(\bсопроводительный\b[\w\s]+:\s*)([\w\.\s№-]+.\d{4})'
+    prod_name: str = r'(Наименование образца испытаний\*\:\s*)([\s\S]*?)\s*Изготовитель'
     manufacturer: str = r'(Изготовитель[\*\:]*)([\w%\s"\.]+)(Место)'
-    date_of_manufacture: str = r'(Дата изготовления[\*\:]*)(\d{2}.\d{2}.\d{4})'
-    date_of_testing: str = r'(Дата проведения испытаний[:\s]*)(с \d{2}.\d{2}.\d{4} по \d{2}.\d{2}.\d{4})'
+    manuf_date: str = r'(Дата (изготовления|производства)[\*\:\s]*)(\d{2}\.\d{2}\.(\d{4}|\d{2}))'
+    test_date: str = r'(Дата проведения испытаний[:\s]*)(с \d{2}.\d{2}.\d{4} по \d{2}.\d{2}.\d{4})'
+
+
+def process_one_indic(cells: tuple[table._Cell]) -> dict:
+    """ Обработать один индикатор, сделать вывод
+    о соответствии и сохранить его в словарь."""
+
+    sub_indicators = {}
+    indicator_name = get_text_with_superscripts(cells[0]).strip()
+    result = get_text_with_superscripts(cells[3]).strip()
+    norm = get_text_with_superscripts(cells[2]).strip()
+
+    pattern = r'(\d+[,\.]?\d*)\s?([•■*xх]+\s?)(\d+)([⁰¹²³⁴⁵⁶⁷⁸⁹]?)'
+
+    match_result = re.search(pattern, result)
+    match_norm = re.search(pattern, norm)
+    if match_result:
+        result = re.sub(r'[■*]', '•', match_result.group())
+    if match_norm:
+        norm = re.sub(r'[■*]', '•', match_norm.group())
+
+    result = re.sub(r'[■*]', '•', result)
+    norm = re.sub(r'[■*]', '•', norm)
+
+    # Проверка, что значение и нормы неидентичные.
+    if not result == norm:
+        sub_indicators[indicator_name] = {'result': result, 'norm': norm}
+        # Проверка на результат и значения, которые нельзя сравнить между собой.
+        if indicator_name in {'Консистенция и внешний вид',
+                              'Цвет',
+                              'Вкус и запах',
+                              'Внешний вид',
+                              'Консистенция',
+                              'Цвет',
+                              'Вкус',
+                              'Запах',
+                              'Структура',
+                              'Поверхность',
+                              'Внешний вид и консистенция',
+                              'Упитанность',
+                              'Состояние кожи',
+
+                              }:
+            if result.replace(' ', '') == norm.replace(' ', ''):
+                sub_indicators[indicator_name]['conformity_main'] = True
+                sub_indicators[indicator_name]['conformity_deviation'] = True
+            else:
+                sub_indicators[indicator_name]['conformity_main'] = False
+                sub_indicators[indicator_name]['conformity_deviation'] = True
+
+        # Для обычных показателей.
+        else:
+            conformity = create_conformity_conclusion(result, norm)
+            if isinstance(conformity, tuple):
+                sub_indicators[indicator_name]['conformity_main'] = conformity[0]
+                sub_indicators[indicator_name]['conformity_deviation'] = conformity[1]
+            else:
+                sub_indicators[indicator_name]['conformity_main'] = conformity
+                sub_indicators[indicator_name]['conformity_deviation'] = True
+    return sub_indicators
 
 
 class WordFileParser:
-    """
-    Класс для изъятия данных из Word файла.
-    """
-
+    """ Класс для изъятия данных из Word файла. """
     def __init__(self, input_word_file: str):
         self.word_file = input_word_file
-        self.all_text_from_file = self.get_one_string_from_word_file()
-        self.document_with_tables = self.convert_word_file_to_docx_document()
+        self.all_text_from_file = self.get_one_string()
+        self.document_with_tables = self.convert_file_to_document()
         self.data = {}
+        self.indicators = {}
 
-    def get_one_string_from_word_file(self) -> str:
-        """
-        Прочитать word файл, вернуть одну большую строку.
-        """
+    def get_one_string(self) -> str:
+        """ Прочитать word файл, вернуть одну большую строку. """
         text = docx2txt.process(self.word_file)
         return text
 
-    def convert_word_file_to_docx_document(self) -> Document:
-        """
-        Прочитать word файл, преобразовать для работы с таблицами в
-        объект класса Document.
-         """
+    def convert_file_to_document(self) -> Document:
+        """ Прочитать word файл, преобразовать для работы с таблицами в
+        объект класса Document. """
         document = Document(self.word_file)
         return document
 
     def get_data_by_keys(self) -> None:
-        """
-        Собрать данные из word файла и сохранить ко ключам в self.data.
-        """
+        """ Собрать данные из word файла и сохранить ко ключам в self.data. """
         for key in FbuPatternsForKeys:
             match = re.search(key.value, self.all_text_from_file, flags=re.IGNORECASE)
-            self.data[key.name] = match.group(2).strip() if match else ''
+            if key == FbuPatternsForKeys.manuf_date:
+                self.data[key.name] = match.group(3).strip() if match else ''
+            else:
+                self.data[key.name] = match.group(2).strip() if match else ''
 
-    def get_text_with_superscripts(self, cell):
-        """
-        Получить текст ячейки, обрабатывая при этом числа со степенью.
-        """
-        text = ""
-
-        for paragraph in cell.paragraphs:
-            for run in paragraph.runs:
-                if run.font.superscript:
-                    text += f"^{run.text}"
-                else:
-                    text += run.text
-
-        # Замена формата "^<digit>" на соответствующие символы степени.
-        text = re.sub(r'(\d+)\^(\d+)',
-                      lambda x: x.group(1) + '⁰¹²³⁴⁵⁶⁷⁸⁹'[int(x.group(2))],
-                      text)
-        return text
-
-    def get_indicators_from_word_file(self) -> None:
-        """
-        Пройтись по таблицам с результатами исследований и собрать
+    def get_indicators(self) -> None:
+        """ Пройтись по таблицам с результатами исследований и собрать
         данные по ним и сохранить в поле 'indicators'.
-        Результат будет сохранен в виде списка словарей, где ключ - наименование
-        показателя, значение - tuple из нормы и результата исследования.
-        """
-
-        all_tables_in_file: list = self.document_with_tables.tables
-        result_list = []
-
-        for table in all_tables_in_file:  # Цикл по таблицам.
-            if len(table.rows) > 1:  # Проверка на наличие в таблице более двух строк.
-                indicators = {}
-
+        Результат будет сохранен в виде словаря, где ключ - наименование
+        показателя, значение - tuple из нормы и результата исследования. """
+        # Цикл по таблицам документа.
+        for table_ in self.document_with_tables.tables:
+            # Проверка на наличие в таблице более двух строк и колонок.
+            if len(table_.rows) > 1 and len(table_.columns) > 2:
                 # Цикл по строкам в таблице, начиная со второй.
-                for _, row in enumerate(table.rows[1:], start=1):
-                    cells = row.cells
-                    indicator_name = self.get_text_with_superscripts(cells[0]).strip()
-                    result = self.get_text_with_superscripts(cells[3]).strip()
-                    standards = self.get_text_with_superscripts(cells[2]).strip()
-                    indicators[indicator_name] = (result, standards)
-
-                result_list.append(indicators)
-
-        self.data['indicators']: list[dict] = result_list
-
-    def add_a_conclusion_about_compliance_of_norms(self):
-        """
-        Добавить в словарь выводы о соответствие каждого результатов исследований нормам,
-        а также сделать общий вывод для протокола имеются ли в нем несоответствия нормам.
-        """
-
-        violations_of_main_indicator = False   # Переменная есть ли нарушения в показателях.
-        violations_of_indicator_with_deviation = False   # Переменная есть ли нарушения в показателях.
-
-        # Перебираем словари в 'показателях'.
-        for number, indicator_dict in enumerate(self.data['indicators']):
-
-            # key - наименование показателя, value - tuple: (результат, норма для показателя)
-            for key, value in indicator_dict.items():
-
-                # Пропуск ключей, по которым не нужно проводить сравнение.
-                if key in KEYS_IN_INDICATORS_FOR_PASS:
-                    new_value = value + ('-',)
-
-                else:
-                    # Получаем вывод по сравнению результат нормам.
-                    complies_with_standards = compare_result_and_norms(value[0], value[1])
-
-                    # Если результат сравнения содержит два показателя:
-                    # вывод по сравнению основного показателя и показателя с погрешностью.
-                    if isinstance(complies_with_standards, list):
-                        if not complies_with_standards[0]:
-                            violations_of_main_indicator = True
-                        if not complies_with_standards[1]:
-                            violations_of_indicator_with_deviation = True
-
-                    # Если результат сравнения состоит из одного bool.
-                    else:
-                        if not complies_with_standards:
-                            violations_of_main_indicator = True
-                    # К показателям результат и норм добавляем вывод о сравнении.
-                    new_value = value + (complies_with_standards,)
-
-                # Записываем в значение показателя
-                self.data['indicators'][number][key] = new_value
-
-        # Добавляем в словарь с данными по всему протоколу ключ
-        # с bool есть ли в протоколе нарушение норм.
-        self.data['violation_of_norms'] = 'Не соответствуют' if violations_of_main_indicator else 'Соответствуют'
-        self.data['violation_of_norms_with_deviation'] = 'Не соответствуют' if violations_of_indicator_with_deviation else 'Соответствуют'
+                for _, row in enumerate(table_.rows[1:], start=1):
+                    # Поучаем и распаковываем словарь из одного показателя.
+                    sub_indicators = process_one_indic(row.cells)
+                    self.indicators = {**self.indicators, **sub_indicators}
 
     def get_all_required_data_from_word_file(self):
         """ Основной метод - направленный на изъятие данных из Word файла."""
         self.get_data_by_keys()  # Получить основные данные по протоколу
-        self.get_indicators_from_word_file()  # Добавить в словарь показатели.
-        self.add_a_conclusion_about_compliance_of_norms()  # Вывод о соответствии нормам
-        # self.data['indicators'] = json.dumps(self.data['indicators'])  # преобразовать в json
+        self.get_indicators()  # Добавить в словарь показатели.
+
+
 
 
 if __name__ == '__main__':
 
-    wp=WordFileParser(r'C:\Users\RIMinullin\Documents\протоколы\фбу\word_files\scan5.docx')
+    wp=WordFileParser(r'C:\Users\RIMinullin\PycharmProjects\protocols\fbu_protocols\выходной_файл.docx')
     wp.get_data_by_keys()
-    wp.get_indicators_from_word_file()
+    wp.get_indicators()
     # print(wp.data)
     wp.get_all_required_data_from_word_file()
-    print(wp.data)
+    print(wp.data.keys())
+    print(wp.indicators)
