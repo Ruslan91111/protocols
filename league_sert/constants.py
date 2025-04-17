@@ -97,34 +97,28 @@ FIX_KEYS_OBJECT_MERGE = {'air': r'В\s*о\s*з\s*д\s*у\s*х',
 
 class FRScreens(Enum):
     """ Пути к скриншотам, необходимым для работы с FineReader с помощью pyautogui. """
-    DESKTOP_ICON: str = r'./screenshots/fine_reader_desktop.png'
-    PANEL_ICON: str = r'./screenshots/fine_reader_panel.png'
-    DESKTOP_APP_LOADING: str = r'./screenshots/fine_reader_loading.png'
-    CONVERT_TO_WORD_MAIN_MENU: str = r'./screenshots/button_convert_to_word_main_menu.png'
-    CONVERT_TO_WORD_INNER_BUTTON: str = r'./screenshots/blue_button_convert_to_word.png'
-    INPUT_FIELD_FILE_NAME: str = r'screenshots/input_file_name.png'
-    PROCESS_OF_CONVERSION: str = r'./screenshots/process_of_conversion.png'
-    BUTTON_CANCEL: str = r'./screenshots/button_cancel.png'
-    CHECKBOX_SAVE_PICS_WITH_MARK: str = r'./screenshots/save_pictures.png'
-    CHECKBOX_SAVE_PICS_UNMARKED: str = r'./screenshots/save_pictures_.png'
-    CHECKMARK: str = r'./screenshots/remark.png'
-    OPEN_DOC: str = r'./screenshots/open_doc.png'
-    OPEN_DOC_CHECKMARK: str = r'./screenshots/open_doc_checkmark.png'
-    IN_CONVERSION_MENU: str = r'./screenshots/in_fine_reader.png'
-    WARNING_AFTER_CONVERT: str = r'./screenshots/warning.png'
-    WARNING_IN_PROC: str = r'./screenshots/warning_in_proc.png'
-    SHUT_WARNING: str = r'./screenshots/shut_warning.png'
-    SHUT_WARNING_BLUE_FRAME: str = r'./screenshots/shut_warning_blue_frame.png'
-    PROCESS_FINISHED: str = r'./screenshots/process_finished.png'
-    ERROR_PAGE_NEED_TO_RM: str = r'./screenshots/error_page_need_to_rm.png'
-    FOR_WORD_DIR: str = r'./screenshots/for_word_dir.png'
-    CHOICE_DIR: str = r'./screenshots/choice_dir.png'
-
-    @property
-    def absolute_path(self) -> str:
-        """Возвращает абсолютный путь к изображению скриншота."""
-        base_dir = Path(__file__).resolve().parent.parent
-        return str(Path.joinpath(base_dir, 'conversion', self.value))
+    DESKTOP_ICON: str = r'fine_reader_desktop.png'
+    PANEL_ICON: str = r'fine_reader_panel.png'
+    DESKTOP_APP_LOADING: str = r'fine_reader_loading.png'
+    CONVERT_TO_WORD_MAIN_MENU: str = r'button_convert_to_word_main_menu.png'
+    CONVERT_TO_WORD_INNER_BUTTON: str = r'blue_button_convert_to_word.png'
+    INPUT_FIELD_FILE_NAME: str = r'input_file_name.png'
+    PROCESS_OF_CONVERSION: str = r'process_of_conversion.png'
+    BUTTON_CANCEL: str = r'button_cancel.png'
+    CHECKBOX_SAVE_PICS_WITH_MARK: str = r'save_pictures.png'
+    CHECKBOX_SAVE_PICS_UNMARKED: str = r'save_pictures_.png'
+    CHECKMARK: str = r'remark.png'
+    OPEN_DOC: str = r'open_doc.png'
+    OPEN_DOC_CHECKMARK: str = r'open_doc_checkmark.png'
+    IN_CONVERSION_MENU: str = r'in_fine_reader.png'
+    WARNING_AFTER_CONVERT: str = r'warning.png'
+    WARNING_IN_PROC: str = r'warning_in_proc.png'
+    SHUT_WARNING: str = r'shut_warning.png'
+    SHUT_WARNING_BLUE_FRAME: str = r'shut_warning_blue_frame.png'
+    PROCESS_FINISHED: str = r'process_finished.png'
+    ERROR_PAGE_NEED_TO_RM: str = r'error_page_need_to_rm.png'
+    FOR_WORD_DIR: str = r'for_word_dir.png'
+    CHOICE_DIR: str = r'choice_dir.png'
 
 
 class ComparTypes(Enum):

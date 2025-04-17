@@ -1,5 +1,5 @@
 """ Исключения для пакета data_preparation. """
-from league_sert.exceptions import MyException
+from protocols.league_sert.exceptions import MyException
 
 
 class TypeOfIndicatorTableError(MyException):

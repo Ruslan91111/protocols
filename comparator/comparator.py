@@ -27,9 +27,9 @@ bool | list[bool]. list[bool] - возвращается, когда резул�
     - conclusion = compare_result_and_norms(result: str, norm: str)
 
 """
-from league_sert.constants import ComparTypes
-from league_sert.data_preparation.exceptions import MethodOfComparisonError
-from league_sert.data_preparation.value_processor import (to_calculate_the_value,
+from protocols.league_sert.constants import ComparTypes
+from protocols.league_sert.data_preparation.exceptions import MethodOfComparisonError
+from protocols.league_sert.data_preparation.value_processor import (to_calculate_the_value,
                                                           define_value_type)
 
 

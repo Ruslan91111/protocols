@@ -3,7 +3,7 @@
 """
 import re
 
-from league_sert.constants import MONTHS
+from protocols.league_sert.constants import MONTHS
 
 
 def get_address_and_code_handler():
