@@ -3,8 +3,8 @@
 """
 import pytest
 
-from league_sert.models.models import Washings
-from league_sert.models.models_creator import create_washings
+from protocols.league_sert.models.models import Washings
+from protocols.league_sert.models.models_creator import create_washings
 
 
 @pytest.fixture(scope='module')

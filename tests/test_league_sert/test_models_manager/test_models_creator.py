@@ -3,7 +3,8 @@ import datetime
 
 import pytest
 
-from league_sert.models.models_creator import split_code_and_address, create_date, create_manuf_prod, fix_keys
+from protocols.league_sert.models.models_creator import (
+    split_code_and_address, create_date, create_manuf_prod, fix_keys)
 
 
 @pytest.mark.parametrize('sampling_place, apllicant_info, expect_address, expect_code', [

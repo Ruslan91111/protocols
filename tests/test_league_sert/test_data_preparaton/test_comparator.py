@@ -1,6 +1,6 @@
 """ Тестирование модуля comparator. """
 import pytest
-from comparator.comparator import Comparator
+from protocols.comparator.comparator import Comparator
 
 
 @pytest.mark.parametrize('result, norm, expecting_conclusion',

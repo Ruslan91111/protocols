@@ -3,14 +3,15 @@ import pytest
 
 from docx import Document
 
-from league_sert.data_preparation.exceptions import TypeOfTableError
-from league_sert.data_preparation.file_parser import (
+from protocols.league_sert.data_preparation.exceptions import TypeOfTableError
+from protocols.league_sert.data_preparation.file_parser import (
     get_text_with_superscripts, find_out_table_type,
     collect_prod_control_data, check_table_only_symbols)
-from league_sert.data_preparation.extract_numb_and_date import get_main_numb_and_date
-from tests.test_league_sert.test_data_preparaton.constants import TEST_WORD_FILES
-from tests.test_league_sert.test_data_preparaton.data_for_test.test_data_text_numb_date import DATA_NUMB_DATE, \
-    PROD_CONTROL_STR
+from protocols.league_sert.data_preparation.extract_numb_and_date import get_main_numb_and_date
+from protocols.tests.test_league_sert.test_data_preparaton.constants import TEST_WORD_FILES
+from protocols.tests.test_league_sert.test_data_preparaton.data_for_test.test_data_text_numb_date import (
+    DATA_NUMB_DATE,
+    PROD_CONTROL_STR)
 
 document = Document()
 
