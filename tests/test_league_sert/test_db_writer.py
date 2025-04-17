@@ -1,12 +1,20 @@
 from datetime import datetime
 
-from league_sert.data_preparation.launch_data_preparation import extract_and_prepare_data
-from league_sert.db_operations.db_writer import _write_objects_from_file_to_db
-from league_sert.models.models import MainProtocol, ManufProd, Air, Washings, StoreProd, ProdControl
-from league_sert.models.models_creator import create_all_objects
-from tests.test_league_sert.test_data_preparaton.constants import TEST_WORD_FILES
+import pytest
+
+from protocols.league_sert.data_preparation.launch_data_preparation import (
+    extract_and_prepare_data)
+from protocols.league_sert.db_operations.db_writer import (
+    _write_objects_from_file_to_db)
+from protocols.league_sert.models.models import (
+    MainProtocol, ManufProd, Air, Washings, StoreProd, ProdControl)
+from protocols.league_sert.models.models_creator import (
+    create_all_objects)
+from protocols.tests.test_league_sert.test_data_preparaton.constants import (
+    TEST_WORD_FILES)
 
 
+@pytest.mark.db_test
 def test_write_file_to_db(setup_database):
     """ Тестируется получение данных и их запись в БД
     из одного конкретного файла."""
@@ -63,6 +71,7 @@ def test_write_file_to_db(setup_database):
     """
 
 
+@pytest.mark.db_test
 def test_write_some_files_to_db(setup_database):
     """ Тестируется получение данных и их запись в БД из 3 файлов
     с протоколами. Проверяется количество записанных объектов в БД. """

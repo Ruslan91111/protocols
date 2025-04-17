@@ -8,8 +8,8 @@ import pytest
 project_root = Path(__file__).resolve().parent.parent  # Adjust as needed
 sys.path.append(str(project_root))
 
-from league_sert.models.models import *
-from league_sert.models.models_creator import create_main_protocol
+from protocols.league_sert.models.models import *
+from protocols.league_sert.models.models_creator import create_main_protocol
 
 
 PROTOCOLS_DB = 'postgresql://RIMinullin:@localhost:5432/postgres'
@@ -91,7 +91,7 @@ def get_session():
     return scoped_session(session_factory)
 
 
-@pytest.fixture(scope='function', autouse=True)
+@pytest.fixture(scope='function', autouse=False)
 def setup_database():
     create_test_db()
     session = get_session()
