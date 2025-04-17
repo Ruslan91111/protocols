@@ -5,7 +5,7 @@ import os
 import shutil
 from pathlib import Path
 
-from league_sert.constants import RECORDED_FILE
+from protocols.league_sert.constants import RECORDED_FILE
 
 
 def read_viewed_from_file(file: str = RECORDED_FILE) -> set:

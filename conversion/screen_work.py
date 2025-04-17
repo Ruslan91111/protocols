@@ -32,15 +32,15 @@ import psutil
 import pyautogui
 import pyperclip
 
-from league_sert.constants import FRScreens
-from conversion.exceptions import ScreenshotNotFoundError
-from conversion.files_and_proc_utils import change_keyboard_layout_on_english, hide_the_windows
+from protocols.league_sert.constants import FRScreens
+from protocols.conversion.exceptions import ScreenshotNotFoundError
+from protocols.conversion.files_and_proc_utils import change_keyboard_layout_on_english, hide_the_windows
 
 
 def get_absolute_scr_path(filename: str) -> str:
     """Возвращает абсолютный путь к изображению скриншота."""
-    base_dir = os.path.dirname(os.path.abspath(__file__))
-    return os.path.join(base_dir, filename)
+    conver_dir = os.path.dirname(os.path.abspath(__file__))
+    return os.path.join(conver_dir, 'screenshots', filename)
 
 
 def wait_scr(screenshot_path: str,
@@ -128,25 +128,25 @@ def launch_desktop_app(process: str, icon_from_panel: str,
 def wait_fr_app_loading() -> None:
     """ Дождаться полной загрузки FineReader. """
     # time.sleep(5)
-    wait_scr_to_disappear(FRScreens.DESKTOP_APP_LOADING.absolute_path)
+    wait_scr_to_disappear(FRScreens.DESKTOP_APP_LOADING.value)
 
 
 def click_convert_main_menu() -> None:
     """ Главное меню, кликнуть по кнопке конвертировать """
-    click_scr(FRScreens.CONVERT_TO_WORD_MAIN_MENU.absolute_path)
+    click_scr(FRScreens.CONVERT_TO_WORD_MAIN_MENU.value)
 
 
 def press_enter():
     pyautogui.press('enter')
 
 
-def pick_all_files(screen=FRScreens.INPUT_FIELD_FILE_NAME.absolute_path):
+def pick_all_files(screen=FRScreens.INPUT_FIELD_FILE_NAME.value):
     """ Ввести название файла в поле приложения. """
     scr = wait_scr(screen)
     time.sleep(0.5)
 
-    new_x = scr[0] + 50
-    new_y = scr[1] - 40
+    new_x = scr[0] + 90
+    new_y = scr[1] - 140
 
     time.sleep(0.5)
     pyautogui.click(new_x, new_y)
@@ -156,7 +156,7 @@ def pick_all_files(screen=FRScreens.INPUT_FIELD_FILE_NAME.absolute_path):
     press_enter()
 
 
-def input_filename(file_path, screen=FRScreens.INPUT_FIELD_FILE_NAME.absolute_path):
+def input_filename(file_path, screen=FRScreens.INPUT_FIELD_FILE_NAME.value):
     """ Ввести название файла в поле приложения. """
     wait_scr(screen)
     time.sleep(0.5)
@@ -172,7 +172,7 @@ def input_filename(file_path, screen=FRScreens.INPUT_FIELD_FILE_NAME.absolute_pa
 def is_in_convert_to_word_section():
     """Проверяем находимся ли в подразделе 'Конвертировать в Microsoft Word'."""
     try:
-        click_scr(FRScreens.BUTTON_CANCEL.absolute_path, timeout=5)
+        click_scr(FRScreens.BUTTON_CANCEL.value, timeout=5)
     except ScreenshotNotFoundError:
         pass
 
@@ -187,10 +187,10 @@ def uncheck_save_image() -> None:
         try:
             time.sleep(0.03)
             # Найти скрин с чекбоксом сохранения рисунков.
-            image = wait_scr(FRScreens.CHECKBOX_SAVE_PICS_WITH_MARK.absolute_path, confidence=confidence)
+            image = wait_scr(FRScreens.CHECKBOX_SAVE_PICS_WITH_MARK.value, confidence=confidence)
             # Если найден убрать галочку.
             if image:
-                click_scr_in_scr(FRScreens.CHECKMARK.absolute_path, image)
+                click_scr_in_scr(FRScreens.CHECKMARK.value, image)
         except ScreenshotNotFoundError:
             break
 
@@ -206,10 +206,10 @@ def check_save_image() -> None:
             time.sleep(0.03)
 
             # Найти скрин с чекбоксом сохранения рисунков.
-            image = wait_scr(FRScreens.CHECKBOX_SAVE_PICS_WITH_MARK.absolute_path, confidence=confidence)
+            image = wait_scr(FRScreens.CHECKBOX_SAVE_PICS_WITH_MARK.value, confidence=confidence)
             if image:
                 try:
-                    click_scr_in_scr(FRScreens.CHECKMARK.absolute_path, image)
+                    click_scr_in_scr(FRScreens.CHECKMARK.value, image)
                     pyautogui.click(image)
                 except:
                     pyautogui.click(image)
@@ -229,10 +229,10 @@ def uncheck_open_doc() -> None:
         try:
             time.sleep(0.03)
             # Найти скрин с чекбоксом сохранения рисунков.
-            image = wait_scr(FRScreens.OPEN_DOC.absolute_path, confidence=confidence)
+            image = wait_scr(FRScreens.OPEN_DOC.value, confidence=confidence)
             # Если найден убрать галочку.
             if image:
-                click_scr_in_scr(FRScreens.OPEN_DOC_CHECKMARK.absolute_path, image)
+                click_scr_in_scr(FRScreens.OPEN_DOC_CHECKMARK.value, image)
         except ScreenshotNotFoundError:
             break
 
@@ -240,7 +240,7 @@ def uncheck_open_doc() -> None:
 def click_convert_blue_button() -> None:
     """ Нажать синюю кнопку конвертировать в Word. """
     try:
-        click_scr(FRScreens.CONVERT_TO_WORD_INNER_BUTTON.absolute_path)
+        click_scr(FRScreens.CONVERT_TO_WORD_INNER_BUTTON.value)
     except Exception as e:
         pyautogui.press('enter')
 
@@ -248,11 +248,11 @@ def click_convert_blue_button() -> None:
 def handle_fr_warning():
     """ Проверить наличия предупреждения после конвертации документа. """
     # Проверить нахождение во внутреннем меню конвертации.
-    wait_scr(FRScreens.IN_CONVERSION_MENU.absolute_path)
+    wait_scr(FRScreens.IN_CONVERSION_MENU.value)
 
     try:
-        wait_scr(FRScreens.WARNING_AFTER_CONVERT.absolute_path, timeout=0.5)
+        wait_scr(FRScreens.WARNING_AFTER_CONVERT.value, timeout=0.5)
         time.sleep(0.5)
-        click_scr(FRScreens.SHUT_WARNING_BLUE_FRAME.absolute_path)
+        click_scr(FRScreens.SHUT_WARNING_BLUE_FRAME.value)
     except ScreenshotNotFoundError:
         return None

@@ -10,12 +10,12 @@
 import os
 import time
 
-from league_sert.constants import FRScreens, FINE_READER_PROCESS
+from protocols.league_sert.constants import FRScreens, FINE_READER_PROCESS
 
-from conversion.files_and_proc_utils import (
+from protocols.conversion.files_and_proc_utils import (
     return_or_create_dir, fetch_files_for_conversion)
 
-from conversion.screen_work import (
+from protocols.conversion.screen_work import (
     click_scr,
     launch_desktop_app,
     wait_fr_app_loading,
@@ -24,8 +24,9 @@ from conversion.screen_work import (
     is_in_convert_to_word_section,
     uncheck_open_doc,
     click_convert_blue_button,
-    check_save_image, pick_all_files
-)
+    check_save_image)
+
+from protocols.conversion.screen_work import pick_all_files
 
 
 def fetch_all_files_to_convert(path_to_dir_pdf: str,
@@ -95,7 +96,7 @@ def convert_all_pdf_in_dir_to_docx(dir_with_pdf_files: str) -> None:
     uncheck_open_doc()  # Снять галочку с открыть документ по окончании конвертации.
 
     # Ввести путь к директории с .docx файлами
-    input_filename(dir_for_word_files, screen=FRScreens.FOR_WORD_DIR.absolute_path)
-    click_scr(FRScreens.CHOICE_DIR.absolute_path)
+    input_filename(dir_for_word_files, screen=FRScreens.FOR_WORD_DIR.value)
+    click_scr(FRScreens.CHOICE_DIR.value)
 
     check_all_files_converted(dir_for_word_files, files_for_convert)

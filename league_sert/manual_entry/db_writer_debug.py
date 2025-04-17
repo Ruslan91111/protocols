@@ -13,16 +13,22 @@ import os
 import subprocess
 from pathlib import Path
 
-from conversion.files_and_proc_utils import close_specific_word_windows, close_specific_pdf_windows
-from database.db_config_postgres import prot_session_maker
-from league_sert.data_preparation.launch_data_preparation import extract_and_prepare_data
-from league_sert.db_operations.db_writer import _write_objects_from_file_to_db
-from league_sert.constants import RECORDED_FILE
-from league_sert.db_operations.file_utils import read_viewed_from_file, move_recorded_from_unrecorded
-from league_sert.manual_entry.exceptions import MissedTableError, MissedKeyCreateInstError
-from league_sert.manual_entry.manual_handlers_exceptions import passed_main_prot_table, handle_missed_table, \
-    handle_missed_key_create_inst_error, handle_date_missed_error
-from league_sert.manual_entry.models_creator_debug import create_all_objects_debug
+from protocols.conversion.files_and_proc_utils import (close_specific_word_windows,
+                                                       close_specific_pdf_windows)
+from protocols.database.db_config_postgres import prot_session_maker
+from protocols.league_sert.data_preparation.launch_data_preparation import (
+    extract_and_prepare_data)
+from protocols.league_sert.db_operations.db_writer import _write_objects_from_file_to_db
+from protocols.league_sert.constants import RECORDED_FILE
+from protocols.league_sert.db_operations.file_utils import (read_viewed_from_file,
+                                                            move_recorded_from_unrecorded)
+from protocols.league_sert.manual_entry.exceptions import (MissedTableError,
+                                                           MissedKeyCreateInstError)
+from protocols.league_sert.manual_entry.manual_handlers_exceptions import (
+    passed_main_prot_table, handle_missed_table, \
+    handle_missed_key_create_inst_error, handle_date_missed_error)
+from protocols.league_sert.manual_entry.models_creator_debug import (
+    create_all_objects_debug)
 
 
 acrobat_path = r"C:\Program Files\Adobe\Acrobat DC\Acrobat\Acrobat.exe"

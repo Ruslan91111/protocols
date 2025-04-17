@@ -10,14 +10,16 @@ from docx import Document
 from docx.table import Table
 from docx2txt import docx2txt
 
-from conversion.exceptions import NumbDateNotFoundError
-from conversion.files_and_proc_utils import close_specific_pdf_windows
-from league_sert.constants import (PattNumbDate, ProdControlPatt, TypesOfTable,
+from protocols.conversion.exceptions import NumbDateNotFoundError
+from protocols.conversion.files_and_proc_utils import close_specific_pdf_windows
+from protocols.league_sert.constants import (PattNumbDate, ProdControlPatt, TypesOfTable,
                                    WRONG_PARTS_IN_ROW, ConvertValueTypes,
                                    TABLE_WORDS_PATTERN)
-from league_sert.data_preparation.exceptions import TypeOfTableError
-from league_sert.data_preparation.extract_numb_and_date import get_main_numb_and_date
-from league_sert.manual_entry.manual_handlers_exceptions import get_main_number_and_date_handler
+from protocols.league_sert.data_preparation.exceptions import TypeOfTableError
+from protocols.league_sert.data_preparation.extract_numb_and_date import (
+    get_main_numb_and_date)
+from protocols.league_sert.manual_entry.manual_handlers_exceptions import (
+    get_main_number_and_date_handler)
 
 
 def check_wrong_parts_in_row(one_row: str, wrong_items) -> bool:
